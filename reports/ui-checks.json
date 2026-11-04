@@ -1,0 +1,30 @@
+{
+  "surface": "independent local preview, not installed Cindy plugin",
+  "phone": {
+    "viewportWidth": 320,
+    "clientWidth": 305,
+    "scrollWidth": 305,
+    "minButtonHeight": 44
+  },
+  "desktop": {
+    "viewportWidth": 900,
+    "clientWidth": 900,
+    "scrollWidth": 900
+  },
+  "invalidAmount": "1.001 rejected; form preserved",
+  "bill": {
+    "amountCents": 29,
+    "saved": true
+  },
+  "subscription": {
+    "amountCents": 990,
+    "created": true,
+    "confirmed": true
+  },
+  "summaryExpenseCents": 1019,
+  "reloadRecovered": true,
+  "lightDark": "rendered and visually reviewed",
+  "realTouchInput": false,
+  "realPhoneDeviceLink": false,
+  "hostInstallation": "MUTATION_CANCELLED"
+}
