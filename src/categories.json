@@ -1,0 +1,142 @@
+[
+  {
+    "key": "food",
+    "label": "餐饮",
+    "type": "expense"
+  },
+  {
+    "key": "shopping",
+    "label": "购物",
+    "type": "expense"
+  },
+  {
+    "key": "transport",
+    "label": "交通",
+    "type": "expense"
+  },
+  {
+    "key": "phone",
+    "label": "通讯",
+    "type": "expense"
+  },
+  {
+    "key": "clothes",
+    "label": "服饰",
+    "type": "expense"
+  },
+  {
+    "key": "beauty",
+    "label": "美容",
+    "type": "expense"
+  },
+  {
+    "key": "housing",
+    "label": "住房",
+    "type": "expense"
+  },
+  {
+    "key": "travel",
+    "label": "旅行",
+    "type": "expense"
+  },
+  {
+    "key": "digital",
+    "label": "数码",
+    "type": "expense"
+  },
+  {
+    "key": "medical",
+    "label": "医疗",
+    "type": "expense"
+  },
+  {
+    "key": "pet",
+    "label": "宠物",
+    "type": "expense"
+  },
+  {
+    "key": "express",
+    "label": "快递",
+    "type": "expense"
+  },
+  {
+    "key": "fun",
+    "label": "娱乐",
+    "type": "expense"
+  },
+  {
+    "key": "sport",
+    "label": "运动",
+    "type": "expense"
+  },
+  {
+    "key": "family",
+    "label": "亲子",
+    "type": "expense"
+  },
+  {
+    "key": "social",
+    "label": "社交",
+    "type": "expense"
+  },
+  {
+    "key": "daily",
+    "label": "日用",
+    "type": "expense"
+  },
+  {
+    "key": "education",
+    "label": "教育",
+    "type": "expense"
+  },
+  {
+    "key": "finance",
+    "label": "理财",
+    "type": "expense"
+  },
+  {
+    "key": "transfer",
+    "label": "转账",
+    "type": "expense"
+  },
+  {
+    "key": "other_expense",
+    "label": "其他支出",
+    "type": "expense"
+  },
+  {
+    "key": "salary",
+    "label": "工资",
+    "type": "income"
+  },
+  {
+    "key": "investment",
+    "label": "投资收益",
+    "type": "income"
+  },
+  {
+    "key": "transfer_in",
+    "label": "他人转入",
+    "type": "income"
+  },
+  {
+    "key": "bonus",
+    "label": "红包收入",
+    "type": "income"
+  },
+  {
+    "key": "refund",
+    "label": "退款",
+    "type": "income"
+  },
+  {
+    "key": "credit",
+    "label": "信用借还",
+    "type": "income"
+  },
+  {
+    "key": "other_income",
+    "label": "其他收入",
+    "type": "income"
+  }
+]

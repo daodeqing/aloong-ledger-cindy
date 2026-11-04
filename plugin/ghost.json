@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 3,
+  "id": "liang-ledger",
+  "name": "阿龍记账",
+  "version": "0.1.0",
+  "description": "电脑与绑定手机共用的本地个人账本：账单、月度汇总、分类统计和订阅到期确认。",
+  "whenToUse": "需要记录收入支出、查询账单、查看月度与分类汇总、管理订阅或确认订阅已扣款时使用",
+  "minCindyVersion": "0.1.125",
+  "releaseNotes": "首个本地个人账本版本，支持账单编辑、订阅自然周期与确认入账、电脑和手机工作台、JSON/CSV 导出。",
+  "entry": "main.js",
+  "launch": "on-demand",
+  "command": "记账",
+  "icon": "assets/icon.png",
+  "mainView": {
+    "title": "阿龍记账",
+    "icon": "chart-column",
+    "html": "main-view.html"
+  },
+  "mobile": {
+    "channels": [
+      "liang-ledger"
+    ],
+    "mainView": "main-view.html"
+  },
+  "library": true,
+  "notify": true,
+  "tools": [
+    {
+      "name": "record_bill",
+      "description": "记录一笔账单，返回整数分账单。收支由 kind 指定。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "expense",
+              "income"
+            ]
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ],
+            "description": "正数人民币元，最多两位小数；推荐字符串"
+          },
+          "category": {
+            "type": "string",
+            "description": "原分类 key；例如支出 food、digital，收入 salary"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "occurredOn": {
+            "type": "string",
+            "description": "YYYY-MM-DD，默认电脑本地今天"
+          }
+        },
+        "required": [
+          "requestId",
+          "amount",
+          "category"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "edit_bill",
+      "description": "修改已有账单；请先查询 revision，再提交完整账单字段。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "查询返回的 revision，用于防止覆盖别人或另一页面的修改"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "expense",
+              "income"
+            ]
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ],
+            "description": "正数人民币元，最多两位小数；推荐字符串"
+          },
+          "category": {
+            "type": "string",
+            "description": "原分类 key；例如支出 food、digital，收入 salary"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "occurredOn": {
+            "type": "string",
+            "description": "YYYY-MM-DD，默认电脑本地今天"
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "revision",
+          "kind",
+          "amount",
+          "category"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "query_bills",
+      "description": "按日期和分类分页查询账单。每页最多 20 条。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "description": "原分类 key；例如支出 food、digital，收入 salary"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_summary",
+      "description": "获取月份收入、支出、净额与分类统计，整数分。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "YYYY-MM"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_subscriptions",
+      "description": "分页列出订阅及当前周期键，默认全部状态。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "all",
+              "active",
+              "paused",
+              "archived"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_subscription",
+      "description": "创建周、月、年订阅；只提醒，用户确认后才入账。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ],
+            "description": "正数人民币元，最多两位小数；推荐字符串"
+          },
+          "category": {
+            "type": "string",
+            "description": "原分类 key；例如支出 food、digital，收入 salary"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "cycle": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "nextDue": {
+            "type": "string",
+            "description": "YYYY-MM-DD。重设日期会重设原始扣款日锚点"
+          }
+        },
+        "required": [
+          "requestId",
+          "name",
+          "amount",
+          "category",
+          "cycle",
+          "nextDue"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_subscription",
+      "description": "修改订阅或启用/暂停/归档；先查询 revision。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "查询返回的 revision，用于防止覆盖别人或另一页面的修改"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ],
+            "description": "正数人民币元，最多两位小数；推荐字符串"
+          },
+          "category": {
+            "type": "string",
+            "description": "原分类 key；例如支出 food、digital，收入 salary"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "cycle": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "nextDue": {
+            "type": "string",
+            "description": "YYYY-MM-DD。重设日期会重设原始扣款日锚点"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "confirm_subscription_charge",
+      "description": "仅当用户明确确认已扣款时调用，按唯一周期键入账；默认账单日期为本期到期日。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "id": {
+            "type": "string"
+          },
+          "periodKey": {
+            "type": "string",
+            "description": "必须原样使用 list_subscriptions 返回的 period_key。先查询再确认；不可自行生成"
+          },
+          "occurredOn": {
+            "type": "string",
+            "description": "YYYY-MM-DD，默认电脑本地今天"
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "periodKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "skip_subscription_period",
+      "description": "按唯一周期键跳过本期，滚动到下一周期，不记账。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "id": {
+            "type": "string"
+          },
+          "periodKey": {
+            "type": "string",
+            "description": "必须原样使用 list_subscriptions 返回的 period_key。先查询再确认；不可自行生成"
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "periodKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "pause_subscription",
+      "description": "暂停指定订阅，停止到期提醒；先查询 revision。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "查询返回的 revision，用于防止覆盖别人或另一页面的修改"
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "query_request",
+      "description": "查询原写入结果。超时不代表没执行；传原 requestId，不自动重复写入。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "本次写入的唯一标识。超时先 query_request；手动重试原请求时沿用标识与原参数"
+          }
+        },
+        "required": [
+          "requestId"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
