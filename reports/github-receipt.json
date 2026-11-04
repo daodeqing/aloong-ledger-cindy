@@ -1,0 +1,16 @@
+{
+  "repository": "daodeqing/aloong-ledger-cindy",
+  "visibility": "private",
+  "sourceCommit": "46bd2868324d6eb5c84b1c690e2bc6897b62b2bc",
+  "releaseId": 434189295,
+  "releaseDraft": true,
+  "assetId": 710195132,
+  "assetName": "liang-ledger-0.1.0.cindy",
+  "assetState": "uploaded",
+  "size": 1005352,
+  "sha256": "c86f415ccb5a19a7ac646573bafb2a54f2aa75a204175a11c9351365748fd819",
+  "sourceFilesVerifiedBeforeFinalReportUpdate": 57,
+  "mismatchesBeforeFinalReportUpdate": [
+    "reports/ui-detect.txt"
+  ]
+}

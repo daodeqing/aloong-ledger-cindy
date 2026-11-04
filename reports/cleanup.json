@@ -1,0 +1,107 @@
+{
+  "status": "completed",
+  "bytesMovedToRecycleBin": 155609375,
+  "projectSpaceRecoveredMB": 148.4,
+  "diskBytesFreed": 0,
+  "note": "已移出项目；回收站未清空，磁盘空间未实际释放",
+  "items": [
+    {
+      "target": ".cache",
+      "status": "recycled",
+      "bytes": 154837586,
+      "files": [
+        {
+          "name": ".cache/preview.sqlite",
+          "bytes": 65536
+        },
+        {
+          "name": ".cache/restart-0b7ade97-313c-466b-9012-a40b911e26fc.sqlite",
+          "bytes": 65536
+        },
+        {
+          "name": ".cache/restart-3143b05b-6606-4f56-85d0-14a089282b01.sqlite",
+          "bytes": 61440
+        },
+        {
+          "name": ".cache/restart-cfde30f4-4149-478c-84df-7dfb3bdfec2d.sqlite",
+          "bytes": 65536
+        },
+        {
+          "name": ".cache/restart-faeb8659-ca68-46bd-a166-8970e7868df6.sqlite",
+          "bytes": 65536
+        },
+        {
+          "name": ".cache/restart-test.sqlite",
+          "bytes": 61440
+        },
+        {
+          "name": ".cache/tools/gh.exe",
+          "bytes": 41483064
+        },
+        {
+          "name": ".cache/tools/node.exe",
+          "bytes": 92534088
+        },
+        {
+          "name": ".cache/impeccable/bin/0.1.18/impeccable.exe",
+          "bytes": 20435344
+        },
+        {
+          "name": ".cache/impeccable/bin/0.1.18/impeccable.exe.verified",
+          "bytes": 66
+        }
+      ]
+    },
+    {
+      "target": "evidence",
+      "status": "recycled",
+      "bytes": 771789,
+      "files": [
+        {
+          "name": "evidence/ghostPreload.json",
+          "bytes": 14153
+        },
+        {
+          "name": "evidence/ghostPreload.ts",
+          "bytes": 9787
+        },
+        {
+          "name": "evidence/github-tree.json",
+          "bytes": 7760
+        },
+        {
+          "name": "evidence/libraryDbCore.json",
+          "bytes": 24253
+        },
+        {
+          "name": "evidence/libraryDbCore.ts",
+          "bytes": 17333
+        },
+        {
+          "name": "evidence/librarySlot.json",
+          "bytes": 96371
+        },
+        {
+          "name": "evidence/librarySlot.ts",
+          "bytes": 70823
+        },
+        {
+          "name": "evidence/manifest.json",
+          "bytes": 237537
+        },
+        {
+          "name": "evidence/manifest.ts",
+          "bytes": 175761
+        },
+        {
+          "name": "evidence/mobilePageService.json",
+          "bytes": 68049
+        },
+        {
+          "name": "evidence/mobilePageService.ts",
+          "bytes": 49962
+        }
+      ]
+    }
+  ]
+}
