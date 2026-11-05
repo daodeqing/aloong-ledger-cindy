@@ -10,14 +10,17 @@ const SCHEMA=[
  "CREATE TABLE requests(request_id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, response_json TEXT NOT NULL, created_at TEXT NOT NULL)",
  "CREATE TABLE reminders(subscription_id TEXT NOT NULL, reminder_day TEXT NOT NULL, PRIMARY KEY(subscription_id,reminder_day))"
 ];
-const WRITES=new Set(['record_bill','edit_bill','create_subscription','update_subscription','pause_subscription','confirm_subscription_charge','skip_subscription_period','save_draft']);
-function createService(library,categories,clock=C.today){
+const REMINDER_SCHEMA="CREATE TABLE IF NOT EXISTS scheduled_reminders(id TEXT PRIMARY KEY,title TEXT NOT NULL,note TEXT NOT NULL,due_at TEXT NOT NULL,timezone TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'active',delivery_state TEXT NOT NULL DEFAULT 'pending',attempt_at TEXT,notified_at TEXT,delivery_error TEXT NOT NULL DEFAULT '',revision INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL)";
+const IMAGE_SCHEMA="CREATE TABLE IF NOT EXISTS image_imports(image_hash TEXT PRIMARY KEY,response_json TEXT NOT NULL,created_at TEXT NOT NULL)";
+const WRITES=new Set(['record_bill','edit_bill','create_subscription','update_subscription','pause_subscription','confirm_subscription_charge','skip_subscription_period','save_draft','create_reminder','update_reminder','record_image_bills']);
+function createService(library,categories,clock=C.today,options={}){
+ const now=options.now||Date.now;
  let initialization, tail=Promise.resolve();
  const cats=new Map(categories.map(x=>[x.key,x]));
  async function host(req){const r=await library(req);if(!r||!r.ok||r.state==='unavailable')C.fail(r?.errorCode||'LIBRARY_UNAVAILABLE',(r?.message||'账本存储不可用')+'；请在 Cindy 设置检查 Library 位置后重试');return r;}
  async function sql(query,params=[]){return (await host({op:'db.exec',dbPath:DB,sql:query,params})).rows||[];}
  async function batch(statements){return host({op:'db.batch',dbPath:DB,statements});}
- async function init(){if(!initialization) initialization=(async()=>{await host({op:'open'});await host({op:'db.open',dbPath:DB});const v=await sql("SELECT name FROM sqlite_master WHERE type='table' AND name='requests'");if(!v.length)await host({op:'db.migrate',dbPath:DB,targetVersion:1,steps:[{toVersion:1,sql:SCHEMA}]});await batch([{sql:'CREATE TABLE IF NOT EXISTS drafts(client_id TEXT PRIMARY KEY, value_json TEXT NOT NULL)',params:[]},{sql:'CREATE TABLE IF NOT EXISTS ledger_meta(id INTEGER PRIMARY KEY, revision INTEGER NOT NULL)',params:[]},{sql:'INSERT OR IGNORE INTO ledger_meta VALUES(1,0)',params:[]}]);})().catch(e=>{initialization=null;throw e;});await initialization;}
+ async function init(){if(!initialization) initialization=(async()=>{await host({op:'open'});await host({op:'db.open',dbPath:DB});const v=await sql("SELECT name FROM sqlite_master WHERE type='table' AND name='requests'");if(!v.length)await host({op:'db.migrate',dbPath:DB,targetVersion:1,steps:[{toVersion:1,sql:SCHEMA}]});await batch([{sql:REMINDER_SCHEMA,params:[]},{sql:IMAGE_SCHEMA,params:[]},{sql:'CREATE INDEX IF NOT EXISTS scheduled_reminders_due ON scheduled_reminders(status,delivery_state,due_at)',params:[]},{sql:'CREATE TABLE IF NOT EXISTS drafts(client_id TEXT PRIMARY KEY, value_json TEXT NOT NULL)',params:[]},{sql:'CREATE TABLE IF NOT EXISTS ledger_meta(id INTEGER PRIMARY KEY, revision INTEGER NOT NULL)',params:[]},{sql:'INSERT OR IGNORE INTO ledger_meta VALUES(1,0)',params:[]}]);})().catch(e=>{initialization=null;throw e;});await initialization;}
  function category(key,kind){if(!cats.has(key)||cats.get(key).type!==kind)C.fail('INVALID_CATEGORY','分类与收支类型不匹配，请重新选择');return key;}
  function integer(n,min,max,label){if(!Number.isInteger(n)||n<min||n>max)C.fail('INVALID_INPUT',label+'无效');return n;}
  async function one(table,id){C.text(id,'记录标识',80);const r=await sql('SELECT * FROM '+table+' WHERE id=?',[id]);if(!r.length)C.fail('NOT_FOUND','记录不存在，请刷新账本');return r[0];}
@@ -28,6 +31,54 @@ function createService(library,categories,clock=C.today){
  function billInput(a){const kind=a.kind||'expense';if(!['expense','income'].includes(kind))C.fail('INVALID_INPUT','收支类型无效');return {kind,amount_cents:C.amount(a.amount),category:category(a.category,kind),note:C.text(a.note,'备注',300,true),occurred_on:C.date(a.occurredOn||clock())};}
  async function handle(op,a={}){
  await init();
+
+ if(op==='reminder_context'||(op==='get_summary'&&a.contextOnly===true))return {now:new Date(now()).toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,localTime:new Date(now()).toString(),notification:'Cindy 屏幕轻提示；电脑唤醒、Cindy 运行且插件启用时检查；不保证响铃或手机锁屏推送'};
+ if(op==='create_reminder')return mutate(op,a,async()=>{
+  const due_at=C.reminderTime(a.dueAt,now()),timezone=C.timezone(a.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const x={id:C.id(),title:C.text(a.title,'提醒内容',100),note:C.text(a.note,'备注',300,true),due_at,timezone,status:'active',delivery_state:'pending',revision:1};
+  return {result:x,statements:[{sql:'INSERT INTO scheduled_reminders(id,title,note,due_at,timezone,created_at) VALUES(?,?,?,?,?,?)',params:[x.id,x.title,x.note,due_at,timezone,new Date(now()).toISOString()]}]};
+ });
+ if(op==='update_reminder')return mutate(op,a,async()=>{
+  const x=await one('scheduled_reminders',a.id);if(x.revision!==a.revision)C.fail('STALE_REVISION','提醒已改变，请刷新后操作');
+  const y={...x,status:a.status||x.status,revision:x.revision+1};
+  if(!['active','completed','cancelled'].includes(y.status))C.fail('INVALID_INPUT','提醒状态无效');
+  if(a.title!==undefined)y.title=C.text(a.title,'提醒内容',100);if(a.note!==undefined)y.note=C.text(a.note,'备注',300,true);
+  if(a.dueAt!==undefined){y.due_at=C.reminderTime(a.dueAt,now());y.timezone=C.timezone(a.timezone||y.timezone);y.delivery_state='pending';y.attempt_at=null;y.notified_at=null;y.delivery_error='';}
+  if(y.status==='active'&&x.status!=='active'&&a.dueAt===undefined)C.fail('NEW_TIME_REQUIRED','恢复提醒需要选择新的提醒时间');
+  return {result:y,statements:[{sql:'UPDATE scheduled_reminders SET title=?,note=?,due_at=?,timezone=?,status=?,delivery_state=?,attempt_at=?,notified_at=?,delivery_error=?,revision=? WHERE id=?',params:[y.title,y.note,y.due_at,y.timezone,y.status,y.delivery_state,y.attempt_at,y.notified_at,y.delivery_error,y.revision,y.id]}]};
+ });
+ if(op==='list_reminders'){
+  const status=a.status||'all';if(!['all','active','completed','cancelled'].includes(status))C.fail('INVALID_INPUT','提醒状态无效');const params=status==='all'?[]:[status],where=status==='all'?'':' WHERE status=?';
+  const total=(await sql('SELECT count(*) n FROM scheduled_reminders'+where,params))[0].n;
+  return {items:await sql('SELECT * FROM scheduled_reminders'+where+' ORDER BY CASE WHEN status=\'active\' THEN 0 ELSE 1 END,due_at,id LIMIT 20 OFFSET ?',[...params,integer(a.offset??0,0,10000000,'页码')]),total};
+ }
+ if(op==='reminder_claim'){
+  const stamp=new Date(now()).toISOString(),cutoff=new Date(now()-60000).toISOString();
+  const rows=await sql("SELECT * FROM scheduled_reminders WHERE status='active' AND due_at<=? AND (delivery_state='pending' OR (delivery_state='failed' AND attempt_at<=?)) ORDER BY due_at,id LIMIT 20",[stamp,cutoff]);
+  if(rows.length)await batch(rows.map(x=>({sql:"UPDATE scheduled_reminders SET delivery_state='uncertain',attempt_at=? WHERE id=?",params:[stamp,x.id]})));
+  return {items:rows,stamp};
+ }
+ if(op==='reminder_delivery'){
+  if(!['sent','failed'].includes(a.state))C.fail('INVALID_INPUT','投递状态无效');
+  await batch(a.ids.map(id=>({sql:"UPDATE scheduled_reminders SET delivery_state=?,notified_at=?,delivery_error=? WHERE id=? AND attempt_at=? AND delivery_state='uncertain'",params:[a.state,a.state==='sent'?new Date(now()).toISOString():null,String(a.error||'').slice(0,300),id,a.stamp]})));return {ok:true};
+ }
+ if(op==='reminder_next'){
+  const r=await sql("SELECT MIN(CASE WHEN delivery_state='failed' AND julianday(attempt_at,'+60 seconds')>julianday(due_at) THEN strftime('%Y-%m-%dT%H:%M:%fZ',attempt_at,'+60 seconds') ELSE due_at END) AS next_at FROM scheduled_reminders WHERE status='active' AND delivery_state IN ('pending','failed')");return r[0]?.next_at||null;
+ }
+ if(op==='record_image_bills'&&a.dryRun===true){
+  if(!Array.isArray(a.attachments)||!a.attachments.length||a.attachments.length>4||!a.attachments.every(h=>typeof h==='string'&&/^[a-f0-9]{64}(?:\.[a-z0-9]+)?$/.test(h)))C.fail('IMAGE_REQUIRED','请通过 ghost_call 顶层 attachments 交接原图');
+  if(!Array.isArray(a.bills)||!a.bills.length||a.bills.length>20)C.fail('INVALID_INPUT','一次可校验1–20笔账单');return {dryRun:true,bills:a.bills.map(billInput),image_hashes:a.attachments};
+ }
+ if(op==='record_image_bills')return mutate(op,a,async()=>{
+  if(!Array.isArray(a.attachments)||a.attachments.length<1||a.attachments.length>4)C.fail('IMAGE_REQUIRED','请将原始图片通过 ghost_call 顶层 attachments 交给插件；最多四张');
+  const hashes=[...new Set(a.attachments.map(h=>{if(typeof h!=='string'||! /^[a-f0-9]{64}(?:\.[a-z0-9]+)?$/.test(h))C.fail('IMAGE_REQUIRED','图片指纹无效，请重新交接原始图片');return h.slice(0,64);}))].sort();
+  for(const hash of hashes){const old=await sql('SELECT response_json FROM image_imports WHERE image_hash=?',[hash]);if(old.length)return {result:{...JSON.parse(old[0].response_json),already_imported:true},statements:[]};}
+  if(!Array.isArray(a.bills)||!a.bills.length||a.bills.length>20)C.fail('INVALID_INPUT','一次可记录 1–20 笔可辨认的人民币账单');
+  const bills=a.bills.map(b=>({id:C.id(),...billInput(b),revision:1})),stamp=new Date(now()).toISOString(),result={bills,image_hashes:hashes,already_imported:false};
+  const statements=bills.map(x=>({sql:'INSERT INTO bills(id,kind,amount_cents,category,note,occurred_on,source,created_at) VALUES(?,?,?,?,?,?,?,?)',params:[x.id,x.kind,x.amount_cents,x.category,x.note,x.occurred_on,'image',stamp]}));
+  statements.push(...hashes.map(hash=>({sql:'INSERT INTO image_imports VALUES(?,?,?)',params:[hash,JSON.stringify(result),stamp]})));return {result,statements};
+ });
+
  if(op==='query_request'){C.text(a.requestId,'requestId',100);const r=await sql('SELECT response_json FROM requests WHERE request_id=?',[a.requestId]);return r.length?{state:'completed',result:JSON.parse(r[0].response_json)}:{state:'not_found'};}
  if(op==='record_bill')return mutate(op,a,async()=>{const x={id:C.id(),...billInput(a),revision:1};return {result:x,statements:[{sql:'INSERT INTO bills(id,kind,amount_cents,category,note,occurred_on,source,created_at) VALUES(?,?,?,?,?,?,?,?)',params:[x.id,x.kind,x.amount_cents,x.category,x.note,x.occurred_on,'manual',new Date().toISOString()]}]};});
  if(op==='edit_bill')return mutate(op,a,async()=>{const old=await one('bills',a.id);if(a.revision!==old.revision)C.fail('STALE_REVISION','账单已被修改，请刷新后编辑');const x={id:old.id,...billInput(a),revision:old.revision+1};return {result:x,statements:[{sql:'UPDATE bills SET kind=?,amount_cents=?,category=?,note=?,occurred_on=?,revision=? WHERE id=?',params:[x.kind,x.amount_cents,x.category,x.note,x.occurred_on,x.revision,x.id]}]};});
@@ -43,7 +94,7 @@ function createService(library,categories,clock=C.today){
  if(op==='get_draft'){const r=await sql('SELECT value_json FROM drafts WHERE client_id=?',[C.text(a.clientId,'页面标识',100)]);return r.length?JSON.parse(r[0].value_json):{};}
  if(op==='save_draft')return mutate(op,a,async()=>{C.text(a.clientId,'页面标识',100);const value=JSON.stringify(a.value||{});if(value.length>8000)C.fail('DRAFT_TOO_LARGE','草稿过大，请缩短备注');return {result:{saved:true},statements:[{sql:'INSERT OR REPLACE INTO drafts VALUES(?,?)',params:[a.clientId,value]}]};});
  if(op==='export_token')return (await sql('SELECT revision FROM ledger_meta WHERE id=1'))[0].revision;
- if(op==='export_page'){const tables={bills:'bills',subscriptions:'subscriptions',periods:'periods'};if(!Object.hasOwn(tables,a.table))C.fail('INVALID_INPUT','导出类型无效');return sql('SELECT * FROM '+tables[a.table]+' ORDER BY '+(a.table==='periods'?'period_key':'id')+' LIMIT 20 OFFSET ?',[integer(a.offset??0,0,10000000,'页码')]);}
+ if(op==='export_page'){const tables={bills:'bills',subscriptions:'subscriptions',periods:'periods',reminders:'scheduled_reminders'};if(!Object.hasOwn(tables,a.table))C.fail('INVALID_INPUT','导出类型无效');return sql('SELECT * FROM '+tables[a.table]+' ORDER BY '+(a.table==='periods'?'period_key':'id')+' LIMIT 20 OFFSET ?',[integer(a.offset??0,0,10000000,'页码')]);}
  C.fail('UNKNOWN_TOOL','未识别操作，请刷新插件');
  }
  function dispatch(op,a){const p=tail.then(()=>handle(op,a));tail=p.catch(()=>{});return p;}

@@ -1,0 +1,521 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T08:45:48.293Z",
+  "title": "Design System: 阿龍记账工作台",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "ALOONG 蓝",
+        "canonical": "#2b6df8",
+        "tonalRamp": [
+          "oklch(15% 0.0656 262.58)",
+          "oklch(26% 0.1312 262.58)",
+          "oklch(38% 0.1859 262.58)",
+          "oklch(50% 0.2187 262.58)",
+          "oklch(62% 0.2187 262.58)",
+          "oklch(74% 0.1750 262.58)",
+          "oklch(85% 0.1094 262.58)",
+          "oklch(95% 0.0437 262.58)"
+        ]
+      },
+      "accent-strong": {
+        "role": "primary",
+        "displayName": "强调蓝",
+        "canonical": "#1e5ae6",
+        "tonalRamp": [
+          "oklch(15% 0.0662 263.25)",
+          "oklch(26% 0.1324 263.25)",
+          "oklch(38% 0.1876 263.25)",
+          "oklch(50% 0.2207 263.25)",
+          "oklch(62% 0.2207 263.25)",
+          "oklch(74% 0.1766 263.25)",
+          "oklch(85% 0.1103 263.25)",
+          "oklch(95% 0.0441 263.25)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "浅蓝色面",
+        "canonical": "#ebf2ff",
+        "tonalRamp": [
+          "oklch(15% 0.0057 263.01)",
+          "oklch(26% 0.0114 263.01)",
+          "oklch(38% 0.0162 263.01)",
+          "oklch(50% 0.0190 263.01)",
+          "oklch(62% 0.0190 263.01)",
+          "oklch(74% 0.0152 263.01)",
+          "oklch(85% 0.0095 263.01)",
+          "oklch(95% 0.0038 263.01)"
+        ]
+      },
+      "on-accent": {
+        "role": "primary",
+        "displayName": "强调面文字",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(50% 0.0000 89.88)",
+          "oklch(62% 0.0000 89.88)",
+          "oklch(74% 0.0000 89.88)",
+          "oklch(85% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "页面背景",
+        "canonical": "#f6f8fc",
+        "tonalRamp": [
+          "oklch(15% 0.0017 264.53)",
+          "oklch(26% 0.0034 264.53)",
+          "oklch(38% 0.0049 264.53)",
+          "oklch(50% 0.0057 264.53)",
+          "oklch(62% 0.0057 264.53)",
+          "oklch(74% 0.0046 264.53)",
+          "oklch(85% 0.0029 264.53)",
+          "oklch(95% 0.0011 264.53)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "内容面",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(50% 0.0000 89.88)",
+          "oklch(62% 0.0000 89.88)",
+          "oklch(74% 0.0000 89.88)",
+          "oklch(85% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "正文文字",
+        "canonical": "#17233c",
+        "tonalRamp": [
+          "oklch(15% 0.0151 263.80)",
+          "oklch(26% 0.0301 263.80)",
+          "oklch(38% 0.0427 263.80)",
+          "oklch(50% 0.0502 263.80)",
+          "oklch(62% 0.0502 263.80)",
+          "oklch(74% 0.0402 263.80)",
+          "oklch(85% 0.0251 263.80)",
+          "oklch(95% 0.0100 263.80)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "辅助文字",
+        "canonical": "#58667e",
+        "tonalRamp": [
+          "oklch(15% 0.0126 261.15)",
+          "oklch(26% 0.0252 261.15)",
+          "oklch(38% 0.0357 261.15)",
+          "oklch(50% 0.0420 261.15)",
+          "oklch(62% 0.0420 261.15)",
+          "oklch(74% 0.0336 261.15)",
+          "oklch(85% 0.0210 261.15)",
+          "oklch(95% 0.0084 261.15)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "细边界",
+        "canonical": "#e3eaf6",
+        "tonalRamp": [
+          "oklch(15% 0.0054 261.34)",
+          "oklch(26% 0.0107 261.34)",
+          "oklch(38% 0.0152 261.34)",
+          "oklch(50% 0.0179 261.34)",
+          "oklch(62% 0.0179 261.34)",
+          "oklch(74% 0.0143 261.34)",
+          "oklch(85% 0.0089 261.34)",
+          "oklch(95% 0.0036 261.34)"
+        ]
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "控件面",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(50% 0.0000 89.88)",
+          "oklch(62% 0.0000 89.88)",
+          "oklch(74% 0.0000 89.88)",
+          "oklch(85% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "错误",
+        "canonical": "#b43d3d",
+        "tonalRamp": [
+          "oklch(15% 0.0464 24.06)",
+          "oklch(26% 0.0928 24.06)",
+          "oklch(38% 0.1315 24.06)",
+          "oklch(50% 0.1547 24.06)",
+          "oklch(62% 0.1547 24.06)",
+          "oklch(74% 0.1237 24.06)",
+          "oklch(85% 0.0773 24.06)",
+          "oklch(95% 0.0309 24.06)"
+        ]
+      },
+      "expense": {
+        "role": "neutral",
+        "displayName": "支出",
+        "canonical": "#b43d3d",
+        "tonalRamp": [
+          "oklch(15% 0.0464 24.06)",
+          "oklch(26% 0.0928 24.06)",
+          "oklch(38% 0.1315 24.06)",
+          "oklch(50% 0.1547 24.06)",
+          "oklch(62% 0.1547 24.06)",
+          "oklch(74% 0.1237 24.06)",
+          "oklch(85% 0.0773 24.06)",
+          "oklch(95% 0.0309 24.06)"
+        ]
+      },
+      "income": {
+        "role": "neutral",
+        "displayName": "收入",
+        "canonical": "#18794e",
+        "tonalRamp": [
+          "oklch(15% 0.0330 158.44)",
+          "oklch(26% 0.0661 158.44)",
+          "oklch(38% 0.0936 158.44)",
+          "oklch(50% 0.1102 158.44)",
+          "oklch(62% 0.1102 158.44)",
+          "oklch(74% 0.0881 158.44)",
+          "oklch(85% 0.0551 158.44)",
+          "oklch(95% 0.0220 158.44)"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "深色 · ALOONG 蓝",
+        "canonical": "#8bb4ff",
+        "tonalRamp": [
+          "oklch(15% 0.0351 261.99)",
+          "oklch(26% 0.0702 261.99)",
+          "oklch(38% 0.0995 261.99)",
+          "oklch(50% 0.1170 261.99)",
+          "oklch(62% 0.1170 261.99)",
+          "oklch(74% 0.0936 261.99)",
+          "oklch(85% 0.0585 261.99)",
+          "oklch(95% 0.0234 261.99)"
+        ]
+      },
+      "dark-accent-strong": {
+        "role": "primary",
+        "displayName": "深色 · 强调蓝",
+        "canonical": "#b0ccff",
+        "tonalRamp": [
+          "oklch(15% 0.0234 262.29)",
+          "oklch(26% 0.0468 262.29)",
+          "oklch(38% 0.0663 262.29)",
+          "oklch(50% 0.0780 262.29)",
+          "oklch(62% 0.0780 262.29)",
+          "oklch(74% 0.0624 262.29)",
+          "oklch(85% 0.0390 262.29)",
+          "oklch(95% 0.0156 262.29)"
+        ]
+      },
+      "dark-accent-soft": {
+        "role": "primary",
+        "displayName": "深色 · 浅蓝色面",
+        "canonical": "#223653",
+        "tonalRamp": [
+          "oklch(15% 0.0174 257.63)",
+          "oklch(26% 0.0347 257.63)",
+          "oklch(38% 0.0492 257.63)",
+          "oklch(50% 0.0578 257.63)",
+          "oklch(62% 0.0578 257.63)",
+          "oklch(74% 0.0463 257.63)",
+          "oklch(85% 0.0289 257.63)",
+          "oklch(95% 0.0116 257.63)"
+        ]
+      },
+      "dark-on-accent": {
+        "role": "primary",
+        "displayName": "深色 · 强调面文字",
+        "canonical": "#122345",
+        "tonalRamp": [
+          "oklch(15% 0.0203 262.65)",
+          "oklch(26% 0.0406 262.65)",
+          "oklch(38% 0.0576 262.65)",
+          "oklch(50% 0.0677 262.65)",
+          "oklch(62% 0.0677 262.65)",
+          "oklch(74% 0.0542 262.65)",
+          "oklch(85% 0.0339 262.65)",
+          "oklch(95% 0.0135 262.65)"
+        ]
+      },
+      "dark-page": {
+        "role": "neutral",
+        "displayName": "深色 · 页面背景",
+        "canonical": "#101826",
+        "tonalRamp": [
+          "oklch(15% 0.0091 261.23)",
+          "oklch(26% 0.0183 261.23)",
+          "oklch(38% 0.0259 261.23)",
+          "oklch(50% 0.0305 261.23)",
+          "oklch(62% 0.0305 261.23)",
+          "oklch(74% 0.0244 261.23)",
+          "oklch(85% 0.0152 261.23)",
+          "oklch(95% 0.0061 261.23)"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "深色 · 内容面",
+        "canonical": "#192436",
+        "tonalRamp": [
+          "oklch(15% 0.0113 259.99)",
+          "oklch(26% 0.0225 259.99)",
+          "oklch(38% 0.0319 259.99)",
+          "oklch(50% 0.0375 259.99)",
+          "oklch(62% 0.0375 259.99)",
+          "oklch(74% 0.0300 259.99)",
+          "oklch(85% 0.0188 259.99)",
+          "oklch(95% 0.0075 259.99)"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "深色 · 正文文字",
+        "canonical": "#edf3ff",
+        "tonalRamp": [
+          "oklch(15% 0.0052 264.49)",
+          "oklch(26% 0.0104 264.49)",
+          "oklch(38% 0.0147 264.49)",
+          "oklch(50% 0.0173 264.49)",
+          "oklch(62% 0.0173 264.49)",
+          "oklch(74% 0.0139 264.49)",
+          "oklch(85% 0.0087 264.49)",
+          "oklch(95% 0.0035 264.49)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "深色 · 辅助文字",
+        "canonical": "#a9b9d1",
+        "tonalRamp": [
+          "oklch(15% 0.0116 258.37)",
+          "oklch(26% 0.0232 258.37)",
+          "oklch(38% 0.0328 258.37)",
+          "oklch(50% 0.0386 258.37)",
+          "oklch(62% 0.0386 258.37)",
+          "oklch(74% 0.0309 258.37)",
+          "oklch(85% 0.0193 258.37)",
+          "oklch(95% 0.0077 258.37)"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "深色 · 细边界",
+        "canonical": "#334259",
+        "tonalRamp": [
+          "oklch(15% 0.0133 258.77)",
+          "oklch(26% 0.0265 258.77)",
+          "oklch(38% 0.0376 258.77)",
+          "oklch(50% 0.0442 258.77)",
+          "oklch(62% 0.0442 258.77)",
+          "oklch(74% 0.0354 258.77)",
+          "oklch(85% 0.0221 258.77)",
+          "oklch(95% 0.0088 258.77)"
+        ]
+      },
+      "dark-control": {
+        "role": "neutral",
+        "displayName": "深色 · 控件面",
+        "canonical": "#142033",
+        "tonalRamp": [
+          "oklch(15% 0.0121 259.30)",
+          "oklch(26% 0.0242 259.30)",
+          "oklch(38% 0.0343 259.30)",
+          "oklch(50% 0.0404 259.30)",
+          "oklch(62% 0.0404 259.30)",
+          "oklch(74% 0.0323 259.30)",
+          "oklch(85% 0.0202 259.30)",
+          "oklch(95% 0.0081 259.30)"
+        ]
+      },
+      "dark-danger": {
+        "role": "neutral",
+        "displayName": "深色 · 错误",
+        "canonical": "#ffaaa3",
+        "tonalRamp": [
+          "oklch(15% 0.0304 24.69)",
+          "oklch(26% 0.0609 24.69)",
+          "oklch(38% 0.0862 24.69)",
+          "oklch(50% 0.1014 24.69)",
+          "oklch(62% 0.1014 24.69)",
+          "oklch(74% 0.0812 24.69)",
+          "oklch(85% 0.0507 24.69)",
+          "oklch(95% 0.0203 24.69)"
+        ]
+      },
+      "dark-expense": {
+        "role": "neutral",
+        "displayName": "深色 · 支出",
+        "canonical": "#ffaaa3",
+        "tonalRamp": [
+          "oklch(15% 0.0304 24.69)",
+          "oklch(26% 0.0609 24.69)",
+          "oklch(38% 0.0862 24.69)",
+          "oklch(50% 0.1014 24.69)",
+          "oklch(62% 0.1014 24.69)",
+          "oklch(74% 0.0812 24.69)",
+          "oklch(85% 0.0507 24.69)",
+          "oklch(95% 0.0203 24.69)"
+        ]
+      },
+      "dark-income": {
+        "role": "neutral",
+        "displayName": "深色 · 收入",
+        "canonical": "#8bdbb6",
+        "tonalRamp": [
+          "oklch(15% 0.0285 163.45)",
+          "oklch(26% 0.0571 163.45)",
+          "oklch(38% 0.0809 163.45)",
+          "oklch(50% 0.0951 163.45)",
+          "oklch(62% 0.0951 163.45)",
+          "oklch(74% 0.0761 163.45)",
+          "oklch(85% 0.0476 163.45)",
+          "oklch(95% 0.0190 163.45)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "余额",
+        "purpose": "月度结余与等宽金额数字。"
+      },
+      "headline": {
+        "displayName": "页面标题",
+        "purpose": "工作台品牌标题。"
+      },
+      "title": {
+        "displayName": "区段标题",
+        "purpose": "列表及录入区域标题。"
+      },
+      "body": {
+        "displayName": "正文",
+        "purpose": "列表与表单内容。"
+      },
+      "label": {
+        "displayName": "辅助标签",
+        "purpose": "提示、标签与辅助状态。"
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "980px"
+      },
+      {
+        "name": "single-column",
+        "value": "760px"
+      },
+      {
+        "name": "phone",
+        "value": "480px"
+      },
+      {
+        "name": "narrow-phone",
+        "value": "350px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "保存账单",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "保存账单；手机最小触控高度 44px。",
+      "html": "<button class=\"ds-primary\">保存账单</button>",
+      "css": ".ds-primary{min-height:40px;padding:9px 13px;border:1px solid transparent;border-radius:9px;font:650 14px/1.5 system-ui,sans-serif;cursor:pointer;background:var(--accent,#2b6df8);color:var(--on-accent,#ffffff);border-color:var(--accent,#2b6df8);}.ds-primary:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}.ds-primary:active:not(:disabled){transform:translateY(1px);}.ds-primary:disabled{opacity:.45;cursor:default;}@media(hover:hover){.ds-primary:hover{background:var(--accent-strong,#1e5ae6);border-color:var(--accent-strong,#1e5ae6);}}@media(max-width:480px){.ds-primary{min-height:44px;}}"
+    },
+    {
+      "name": "添加提醒",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "添加提醒；手机最小触控高度 44px。",
+      "html": "<button class=\"ds-quiet\">添加提醒</button>",
+      "css": ".ds-quiet{min-height:40px;padding:9px 13px;border:1px solid transparent;border-radius:9px;font:650 14px/1.5 system-ui,sans-serif;cursor:pointer;background:var(--card,#ffffff);color:var(--ink,#17233c);border-color:var(--line,#e3eaf6);}.ds-quiet:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}.ds-quiet:active:not(:disabled){transform:translateY(1px);}.ds-quiet:disabled{opacity:.45;cursor:default;}@media(hover:hover){.ds-quiet:hover{background:var(--accent-soft,#ebf2ff);color:var(--accent-strong,#1e5ae6);}}@media(max-width:480px){.ds-quiet{min-height:44px;}}"
+    },
+    {
+      "name": "导出 JSON",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "导出 JSON；手机最小触控高度 44px。",
+      "html": "<button class=\"ds-ghost\">导出 JSON</button>",
+      "css": ".ds-ghost{min-height:40px;padding:9px 10px;border:1px solid transparent;border-radius:9px;font:650 12px/1.5 system-ui,sans-serif;cursor:pointer;background:transparent;color:var(--muted,#58667e);border-color:transparent;}.ds-ghost:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}.ds-ghost:active:not(:disabled){transform:translateY(1px);}.ds-ghost:disabled{opacity:.45;cursor:default;}@media(hover:hover){.ds-ghost:hover{background:var(--accent-soft,#ebf2ff);color:var(--accent-strong,#1e5ae6);}}@media(max-width:480px){.ds-ghost{min-height:44px;}}"
+    },
+    {
+      "name": "备注输入",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "不透明辅助文字占位；错误由旁侧提示表达。",
+      "html": "<input class=\"ds-input\" aria-label=\"备注\" placeholder=\"这笔钱花在了哪里？\">",
+      "css": ".ds-input{width:100%;min-height:42px;padding:9px 11px;border:1px solid var(--line,#e3eaf6);border-radius:8px;background:var(--control,#ffffff);color:var(--ink,#17233c);font:14px/1.5 system-ui,sans-serif;caret-color:var(--accent,#2b6df8);}.ds-input::placeholder{color:var(--muted,#58667e);opacity:1;}.ds-input:hover{border-color:var(--accent,#2b6df8);}.ds-input:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}@media(max-width:480px){.ds-input{min-height:44px;font-size:16px;}}"
+    },
+    {
+      "name": "月份选择",
+      "kind": "input",
+      "refersTo": "month-input",
+      "description": "汇总月份；760px 及以下最小高度 44px。",
+      "html": "<input class=\"ds-month\" type=\"month\" aria-label=\"汇总月份\">",
+      "css": ".ds-month{width:148px;min-height:38px;padding:7px 9px;border:1px solid var(--line,#e3eaf6);border-radius:8px;background:var(--card,#ffffff);color:var(--ink,#17233c);font:14px/1.5 system-ui,sans-serif;}.ds-month:hover{border-color:var(--accent,#2b6df8);}.ds-month:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}@media(max-width:760px){.ds-month{min-height:44px;}}@media(max-width:480px){.ds-month{width:137px;font-size:13px;}}@media(max-width:350px){.ds-month{width:128px;}}"
+    },
+    {
+      "name": "账本导航",
+      "kind": "nav",
+      "refersTo": "navigation-selected",
+      "description": "实心蓝色选中态，窄屏换行；此片段展示状态，不执行切页。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"账本内容\"><button aria-pressed=\"true\">今日</button><button aria-pressed=\"false\">全部账单</button><button aria-pressed=\"false\">提醒</button></nav>",
+      "css": ".ds-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px;border-bottom:1px solid var(--line,#e3eaf6);}.ds-nav button{min-height:40px;padding:6px 11px;border:0;border-radius:8px;background:transparent;color:var(--muted,#58667e);font:600 14px/1.5 system-ui,sans-serif;cursor:pointer;}.ds-nav button[aria-pressed=\"true\"]{background:var(--accent,#2b6df8);color:var(--on-accent,#ffffff);}.ds-nav button:focus-visible{outline:2px solid var(--accent,#2b6df8);outline-offset:2px;}.ds-nav button:active:not(:disabled){transform:translateY(1px);}.ds-nav button:disabled{opacity:.45;cursor:default;}@media(hover:hover){.ds-nav button:not([aria-pressed=\"true\"]):hover{background:var(--accent-soft,#ebf2ff);color:var(--ink,#17233c);}}@media(max-width:480px){.ds-nav button{min-height:44px;font-size:12px;flex:1 0 auto;}}"
+    },
+    {
+      "name": "工作区容器",
+      "kind": "card",
+      "refersTo": "workspace-card",
+      "description": "平面内容容器，使用细边界，不叠加装饰阴影。",
+      "html": "<section class=\"ds-card\"><h2>提醒</h2><p>暂无待办提醒</p></section>",
+      "css": ".ds-card{padding:18px;border:1px solid var(--line,#e3eaf6);border-radius:15px;background:var(--card,#ffffff);color:var(--ink,#17233c);font:14px/1.5 system-ui,sans-serif;}.ds-card h2{margin:0 0 8px;font-size:16px;line-height:1.35;font-weight:700;}.ds-card p{margin:0;color:var(--muted,#58667e);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "阿龍记账工作台",
+    "overview": "操作型界面，沿用 ALOONG 的中文分类、分类图标及蓝白视觉。视觉优先级服务于收支识别、列表浏览和快速录入；手机沿用同一套账本语言，以单列和大触控区适应窄屏。\n\n无框架、无外部字体、无装饰动效，使用原生表单与触屏滚动；包内外部脚本兼容 Cindy CSP。宿主文字、背景、边界变量优先；统一细边界，不叠加装饰阴影。",
+    "keyCharacteristics": [
+      "ALOONG 蓝白身份，跟随 Light/Dark 模式。",
+      "系统字体、等宽金额数字与清晰层级。",
+      "电脑分栏、手机单列、原生表单大触控。",
+      "细边界与色面分组，轻量且无装饰动效。"
+    ],
+    "rules": [],
+    "dos": [
+      "**Do** 沿用 ALOONG 蓝白视觉、中文分类与现有分类素材，并支持 Light/Dark。",
+      "**Do** 保留电脑分栏、手机单列与主要操作大触控区。",
+      "**Do** 使用系统字体、等宽金额数字、清晰焦点与不透明占位文字。",
+      "**Do** 如实显示状态、错误、费用和提醒运行条件。"
+    ],
+    "donts": [
+      "**Don't** 叠加装饰阴影、装饰动效、外部字体或前端框架。",
+      "**Don't** 用假账单填充空状态，或把未核对的 AI 草稿表现为已入账。",
+      "**Don't** 暗示提醒具有系统闹钟或手机锁屏推送的能力。"
+    ]
+  }
+}

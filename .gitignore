@@ -2,5 +2,6 @@
 __pycache__/
 *.pyc
 evidence/
-.impeccable/
+.impeccable/*
+!.impeccable/design.json
 reports/*raw*

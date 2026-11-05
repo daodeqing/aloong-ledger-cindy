@@ -4,6 +4,7 @@ const channel=new BroadcastChannel('liang-ledger');
 const publicTools=new Set(LEDGER_TOOLS);
 const pageTools=new Set([...publicTools,'ping','due_items','get_draft','save_draft','export_page','export_token']);
 let reminderTail=Promise.resolve();
+const reminderEngine=typeof setTimeout==='function'?LedgerReminderEngine.create({ledger,notify:text=>cindy.send({type:'notify',text,tone:'warning'}),changed:()=>channel.postMessage({type:'ledger-changed'})}):null;
 function validateAiDraft(draft){
  if(!draft||typeof draft!=='object')LedgerCore.fail('AI_INVALID_DRAFT','AI 没有返回可识别的内容，请换个说法');
  const category=LedgerCategories.find(item=>item.key===draft.category);
@@ -47,9 +48,10 @@ function checkReminders(mobilePageId){
  }).catch(e=>channel.postMessage({type:'ledger-notice',message:e.message}));
 }
 async function execute(op,args,context={}){
+ if(op==='record_image_bills'&&!context.callId)LedgerCore.fail('CHAT_IMAGES_ONLY','请在 Cindy 对话中发送图片后使用图片记账工具');
  if(op==='ping'){await ledger.init();return {ready:true,today:LedgerCore.today(),currency:'CNY',categories:LedgerCategories};}
  if(op==='parse_ledger_text')return parseLedgerText(args,context);
- return ledger.dispatch(op,args||{});
+ const result=await ledger.dispatch(op,args||{});if(['create_reminder','update_reminder'].includes(op))reminderEngine?.check();return result;
 }
 channel.onmessage=async event=>{
  const m=event.data;if(!m||m.type!=='ledger-request'||typeof m.requestId!=='string'||!pageTools.has(m.tool))return;
@@ -70,4 +72,4 @@ cindy.onHostMessage(async msg=>{
   checkReminders(msg.mobilePageId);
  }catch(e){await cindy.send({type:'tool-result',callId:msg.callId,ok:false,errorCode:e.code||'LEDGER_ERROR',message:e.message||'记账失败，请刷新账本并查询原请求'});}
 });
-ledger.init().then(()=>checkReminders()).catch(e=>channel.postMessage({type:'ledger-notice',message:e.message}));
+ledger.init().then(()=>{reminderEngine?.check();return checkReminders();}).catch(e=>channel.postMessage({type:'ledger-notice',message:e.message}));
