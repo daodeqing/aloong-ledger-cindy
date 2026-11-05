@@ -14,26 +14,46 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&
 const values=f=>Object.fromEntries(new FormData(f).entries());
 function assign(f,v){for(const [k,value]of Object.entries(v||{}))if(f.elements.namedItem(k))f.elements.namedItem(k).value=value;}
 function notice(t){$('notice').textContent=t||'';}
+async function wakeBrain(){
+ try{
+  await fetch('/wake',{cache:'no-store'});
+ }catch(e){}
+}
 function send(tool,args={},timeout=12000){
- const requestId=C.id();return new Promise((resolve,reject)=>{
- const timer=setTimeout(()=>{listeners.delete(requestId);reject(Object.assign(new Error('电脑响应超时。请检查电脑在线及插件已启用，并查询原请求。'),{code:'TIMEOUT'}));},timeout);
- listeners.set(requestId,{resolve,reject,timer});bc.postMessage({type:'ledger-request',requestId,tool,args});
+ const requestId=C.id();
+ wakeBrain();
+ return new Promise((resolve,reject)=>{
+  let retryInterval=null;
+  const timer=setTimeout(()=>{
+   if(retryInterval)clearInterval(retryInterval);
+   listeners.delete(requestId);
+   reject(Object.assign(new Error('电脑响应超时。请检查电脑在线及插件已启用，并查询原请求。'),{code:'TIMEOUT'}));
+  },timeout);
+  listeners.set(requestId,{
+   resolve:(res)=>{if(retryInterval)clearInterval(retryInterval);resolve(res);},
+   reject:(err)=>{if(retryInterval)clearInterval(retryInterval);reject(err);},
+   timer
+  });
+  bc.postMessage({type:'ledger-request',requestId,tool,args});
+  retryInterval=setInterval(()=>{
+   wakeBrain();
+   bc.postMessage({type:'ledger-request',requestId,tool,args});
+  },400);
  });
 }
-bc.onmessage=e=>{const m=e.data||{};if(m.type==='ledger-changed'){if(!saving&&!loading&&categories.length)refresh();return;}if(m.type==='ledger-notice'){notice(m.message);return;}if(m.type!=='ledger-response')return;const p=listeners.get(m.requestId);if(!p)return;listeners.delete(m.requestId);clearTimeout(p.timer);m.ok?p.resolve(m.result):p.reject(Object.assign(new Error(m.message||'操作失败，请刷新账本'),{code:m.errorCode}));};
+bc.onmessage=e=>{
+ const m=e.data||{};
+ if(m.type==='ledger-changed'){if(!saving&&!loading&&categories.length)refresh();return;}
+ if(m.type==='ledger-notice'){notice(m.message);return;}
+ if(m.type!=='ledger-response')return;
+ const p=listeners.get(m.requestId);
+ if(!p)return;
+ listeners.delete(m.requestId);
+ clearTimeout(p.timer);
+ m.ok?p.resolve(m.result):p.reject(Object.assign(new Error(m.message||'操作失败，请刷新账本'),{code:m.errorCode}));
+};
 async function connect(){
- const controller=new AbortController(),wakeTimer=setTimeout(()=>controller.abort(),5000);
- try{
-  const response=await fetch('/wake',{signal:controller.signal,cache:'no-store'});
-  if(!response.ok)throw Error('无法唤醒插件，请在电脑 Cindy 中启用阿龍记账');
- }catch(error){
-  throw Error(error.name==='AbortError'?'连接电脑账本超时，请点击“重新连接”':'无法唤醒插件，请在电脑 Cindy 中启用阿龍记账');
- }finally{clearTimeout(wakeTimer);}
- let last;
- for(let attempt=0;attempt<4;attempt+=1){
-  try{return await send('ping',{},1500);}catch(error){last=error;if(attempt<3)await new Promise(resolve=>setTimeout(resolve,120));}
- }
- throw last;
+ return await send('ping',{},5000);
 }
 function setWrites(){document.querySelectorAll('[data-write]').forEach(b=>b.disabled=saving||!!unresolved);$('recovery').hidden=!unresolved;if(unresolved)$('pendingText').textContent='请求 '+unresolved.args.requestId+'；结果可能已保存，请先查询。';}
 async function recover(){if(!unresolved)return;try{const r=await send('query_request',{requestId:unresolved.args.requestId});if(r.state==='completed'){unresolved=null;storageSet('ledger-pending',null);$('retryPending').hidden=true;notice('已找到原请求，写入已完成。');resetAfterSave();setWrites();await refresh();}else{$('pendingText').textContent='尚未查到原请求。先核对账单或订阅，再手动重发同一请求；系统不会自动重发。';$('retryPending').hidden=false;}}catch(e){notice(e.message);}}
