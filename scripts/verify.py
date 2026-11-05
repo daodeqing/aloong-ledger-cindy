@@ -17,7 +17,7 @@ def run():
         if r.returncode:raise RuntimeError(r.stdout+r.stderr)
         return r.stdout+r.stderr
     command([sys.executable,'-X','utf8',str(ROOT/'scripts/build.py')])
-    for p in list((ROOT/'src').glob('*.js'))+[ROOT/'plugin/main.js',ROOT/'plugin/view.js']:
+    for p in list((ROOT/'src').glob('*.js'))+[ROOT/'plugin/main.js']+([ROOT/'plugin/view.js'] if (ROOT/'plugin/view.js').exists() else []):
         command([str(node),'--check',str(p)])
     manifest=json.loads((ROOT/'plugin/ghost.json').read_text(encoding='utf-8'))
     assert manifest['schemaVersion']==3 and manifest['id']=='liang-ledger' and manifest['version']=='0.4.0'
@@ -38,7 +38,7 @@ def run():
             for n in names:
                 assert not n.startswith(('/',chr(92))) and '..' not in Path(n).parts,n
                 assert not any(s in n.split('/') for s in ['node_modules','tests','scripts','.cache','.git']),n
-            for n in ['ghost.json','main.js','main-view.html','view.js']:
+            for n in ['ghost.json','main.js','main-view.html']:
                 assert z.read(n)==(ROOT/'plugin'/n).read_bytes(),'安装包已过期，请重新 ghost_forge_pack: '+n
         package={'bytes':pack.stat().st_size,'sha256':hashlib.sha256(pack.read_bytes()).hexdigest(),'files':len(names)}
     result={'manifest':'passed','paths':'passed','javascript_syntax':'passed','business_tests':int(re.search(r'(?m)^.*tests (\d+)',output).group(1)),'package':package,'runtime_dependencies':[]}

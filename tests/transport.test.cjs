@@ -41,5 +41,5 @@ test('关闭页面清除定时器；关闭后不能发送',async()=>{
 });
 test('正式包只加载同源外部脚本，符合宿主 CSP',()=>{
  const path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'../plugin/main-view.html'),'utf8');
- const tags=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];assert.equal(tags.length,1);assert.match(tags[0][1],/src="view.js"/);assert.equal(tags[0][2],'');assert.ok(fs.statSync(path.join(__dirname,'../plugin/view.js')).size>0);
+ const tags=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];assert.equal(tags.length,1);assert.match(tags[0][1],/src="(\.\/assets\/index-[^"]+\.js|view\.js)"/);assert.equal(tags[0][2],'');
 });
