@@ -52,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply('<!doctype html><script src="/preview-host.js"></script><script src="/main.js"></script>','text/html;charset=utf-8')
         if path in ['/','/main-view.html']:
             html=(ROOT/'plugin/main-view.html').read_text(encoding='utf-8')
-            html=html.replace('<main', '<p style="padding:12px;text-align:center">测试预览 · 独立测试账本，不连接 Cindy 正式数据。正式入口：Cindy → 更多 → 阿龍记账。</p><main',1)
+            html=html.replace('<title>', '<title>测试预览 · ',1)
             if 'bare=1' not in self.path:html=html.replace('<body>','<body><iframe src="/brain" hidden title="Preview host"></iframe>',1)
             return self.reply(html,'text/html;charset=utf-8')
         p=(ROOT/'plugin'/path.lstrip('/')).resolve()
