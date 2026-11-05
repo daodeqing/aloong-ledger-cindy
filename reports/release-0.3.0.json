@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-05",
+  "version": "0.3.0",
+  "automatedTests": {
+    "passed": 27,
+    "failed": 0
+  },
+  "host": {
+    "version": "0.1.125",
+    "sourceCommit": "ac785430449042f120a296b881a25ae52333f1e1",
+    "installAction": "updated",
+    "namespace": "local",
+    "instanceId": "_ns__local__liang-ledger"
+  },
+  "desktopWorkspace": {
+    "url": "cindy-ghost://liang-ledger/main-view.html",
+    "connected": true,
+    "addReminderButtonOpensForm": true
+  },
+  "reminder": {
+    "scheduledAt": "2026-11-05T08:16:08.000Z",
+    "attemptAt": "2026-11-05T08:16:08.001Z",
+    "hostAcceptedAt": "2026-11-05T08:16:08.079Z",
+    "hostReceiptDelayMs": 79,
+    "testStatusAfterAcceptance": "completed",
+    "reminderDoesNotCreateBills": true,
+    "userSawNotification": "not_verified"
+  },
+  "image": {
+    "fixture": "synthetic receipt: total28.50-discount5.00=paid23.50",
+    "hostHandoff": "passed",
+    "integerCents": 2350,
+    "mode": "dryRun",
+    "realLedgerModified": false,
+    "sameImageDedup": "SQLite regression passed"
+  },
+  "realLedgerAfterTests": {
+    "billCount": 2,
+    "expenseCents": 2224
+  },
+  "responsive": {
+    "cssWidths": [
+      320,
+      900,
+      1280
+    ],
+    "horizontalOverflow": false,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "manualReminderSave": "passed",
+    "pastTimeRejected": "passed",
+    "monthTouchHeight": 44,
+    "placeholderOpacity": 1,
+    "realPhoneDeviceLink": "not_tested_no_available_devices"
+  },
+  "designReview": {
+    "disposition": "ship",
+    "scope": "three listed UI fixes and four screenshots; not real phone link",
+    "findingsResolved": [
+      "placeholder contrast",
+      "44px month touch target",
+      "blue-white documentation"
+    ]
+  },
+  "marketplace": {
+    "preparedId": "ad3d7179-b4e0-40bf-b8ea-c48cf4d6d822",
+    "packageSha256": "96be71e0123134724b4063ffd8d410700b33a1ea6e9e1e88990220fdbde153d3",
+    "blockers": []
+  },
+  "localArtifact": {
+    "path": "plugin/liang-ledger-0.3.0.cindy",
+    "bytes": 1019906,
+    "sha256": "db255b319f904adf5e24f5a08e1e14e48873cd5178d129465cf36ba21a3bfdd3",
+    "files": 33
+  }
+}

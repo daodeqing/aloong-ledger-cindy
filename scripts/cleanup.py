@@ -15,7 +15,7 @@ def recycle(path):
     result=call(ctypes.byref(operation))
     if result or operation.fAnyOperationsAborted or path.exists():raise RuntimeError('移至回收站未完成: '+str(path)+' code='+str(result))
 def main():
-    targets=[ROOT/'.cache',ROOT/'evidence',ROOT/'.impeccable']
+    targets=[ROOT/'.cache',ROOT/'evidence',ROOT/'.impeccable/review',ROOT/'.impeccable/cache',ROOT/'.impeccable/mocks']
     targets += [p for p in ROOT.rglob('__pycache__') if '.git' not in p.parts and not any(p.is_relative_to(t) for t in targets)]
     records=[];total=0
     for target in targets:

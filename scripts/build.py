@@ -11,6 +11,7 @@ def build():
              'globalThis.LedgerCategories='+json.dumps(categories,ensure_ascii=False)+';\n',
              'const LEDGER_TOOLS='+json.dumps(names)+';\n',
              (ROOT/'src/service.js').read_text(encoding='utf-8'),
+             (ROOT/'src/reminder-engine.js').read_text(encoding='utf-8'),
              (ROOT/'src/brain.js').read_text(encoding='utf-8')]
     PLUGIN.mkdir(exist_ok=True)
     (PLUGIN/'main.js').write_text('\n'.join(sources),encoding='utf-8',newline='\n')

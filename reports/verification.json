@@ -2,10 +2,10 @@
   "manifest": "passed",
   "paths": "passed",
   "javascript_syntax": "passed",
-  "business_tests": 21,
+  "business_tests": 27,
   "package": {
-    "bytes": 1012854,
-    "sha256": "a5d3f33f5b6e4d6c58884fe03a89ba257f96034a146a0c1718cddfd368e1f3a2",
+    "bytes": 1019906,
+    "sha256": "db255b319f904adf5e24f5a08e1e14e48873cd5178d129465cf36ba21a3bfdd3",
     "files": 33
   },
   "runtime_dependencies": []

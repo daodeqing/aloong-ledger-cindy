@@ -2,13 +2,13 @@
   "schemaVersion": 3,
   "id": "liang-ledger",
   "name": "阿龍记账",
-  "version": "0.2.3",
-  "description": "电脑与绑定手机共用的本地个人账本：账单、月度汇总、分类统计和订阅到期确认。",
-  "whenToUse": "需要手动或用自然语言记录收入支出、查询账单、查看月度与分类汇总、管理订阅或确认订阅已扣款时使用",
+  "version": "0.3.0",
+  "description": "本地个人账本、图片记账、周期订阅与生活提醒。电脑和绑定手机共用工作台。",
+  "whenToUse": "需要手动或自然语言记账、从支付截图或小票图片记账、查询账单与分类汇总、管理订阅、设置喝药等生活提醒时使用",
   "minCindyVersion": "0.1.125",
-  "releaseNotes": "修复工作台内联脚本被 Cindy 安全策略拦截导致按钮无响应；脚本改为包内同源文件。连接先校验唤醒结果，再握手，只重试只读握手；账单与 AI 请求只发送一次，超时后查询原写入，防止重复入账与重复模型调用。区分临时预览与正式账本入口，保留已有数据与插件身份。",
+  "releaseNotes": "新增生活提醒：聊天与工作台创建、改期、完成、取消；轻量常驻检查、重启补报和投递状态，提醒不调用模型。新增图片账单工具：由当前 Cindy 对话识图，插件校验人民币金额、原图去重并原子保存。工作台沿用 ALOONG 蓝白风格，新增提醒入口并适配电脑与320px手机。保留自然周期、整数分、幂等请求和已有账本数据。Cindy退出、电脑休眠时无法即时提醒，不保证响铃或锁屏推送。",
   "entry": "main.js",
-  "launch": "on-demand",
+  "launch": "resident",
   "command": "记账",
   "icon": "assets/icon.png",
   "mainView": {
@@ -181,13 +181,17 @@
     },
     {
       "name": "get_summary",
-      "description": "获取月份收入、支出、净额与分类统计，整数分。",
+      "description": "获取月份收支分类汇总；contextOnly=true 时只读取执行电脑当前日期、时区和提醒运行条件。创建自然语言提醒前用此确认日期。",
       "parameters": {
         "type": "object",
         "properties": {
           "month": {
             "type": "string",
             "description": "YYYY-MM"
+          },
+          "contextOnly": {
+            "type": "boolean",
+            "description": "只取当前时间和时区，避免用聊天日期猜明天的具体日期"
           }
         },
         "required": [],
@@ -431,6 +435,181 @@
         },
         "required": [
           "requestId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_reminder",
+      "description": "创建一次性生活提醒。Cindy运行、电脑唤醒且插件启用时检查；只提供屏幕轻提示，不保证响铃和手机锁屏推送；关闭后恢复会补报。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "写入唯一编号；超时先 query_request，同一请求保持原编号"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "dueAt": {
+            "type": "string",
+            "description": "明确未来时刻，含UTC偏移的 ISO 时间，例如 2026-11-06T08:30:00+08:00。先 get_summary(contextOnly=true) 读取当前时区与日期，不猜缺失的时间。"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA 时区，例如 Asia/Shanghai；默认执行电脑时区"
+          }
+        },
+        "required": [
+          "requestId",
+          "title",
+          "dueAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_reminders",
+      "description": "分页查询提醒、计划时刻、通知投递状态和 revision。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "all",
+              "active",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_reminder",
+      "description": "修改提醒内容或改期，标记 completed 已完成或 cancelled 已取消；先查询 revision；恢复须指定新的 dueAt。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "写入唯一编号；超时先 query_request，同一请求保持原编号"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "dueAt": {
+            "type": "string",
+            "description": "明确未来时刻，含UTC偏移的 ISO 时间，例如 2026-11-06T08:30:00+08:00。先 get_summary(contextOnly=true) 读取当前时区与日期，不猜缺失的时间。"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA 时区，例如 Asia/Shanghai；默认执行电脑时区"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "record_image_bills",
+      "description": "从用户发给 Cindy 的支付截图或小票自动记账。当前视觉 Agent 先读取原图，仅提取清晰可辨认且用户授权记录的人民币实际收支，区分退款与支出，不把余额/优惠额当实付；日期或金额不清楚先询问。通过 ghost_call 顶层 attachments 交接原图，bills 填识别结果；插件原图去重、整数分校验后原子保存，重复原图返回原账单。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "写入唯一编号；超时先 query_request，同一请求保持原编号"
+          },
+          "bills": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "expense",
+                    "income"
+                  ]
+                },
+                "amount": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 300
+                },
+                "occurredOn": {
+                  "type": "string",
+                  "description": "原图明确的 YYYY-MM-DD；无明确日期且用户同意按今天记录时用 get_summary(contextOnly=true) 确认电脑日期"
+                }
+              },
+              "required": [
+                "kind",
+                "amount",
+                "category",
+                "occurredOn"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "由 Cindy 通过 ghost_call 顶层 attachments 过户注入的原图指纹，勿自行编造"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "true 仅校验识别字段与图片指纹，不写入账单；默认 false 自动记账"
+          }
+        },
+        "required": [
+          "requestId",
+          "bills"
         ],
         "additionalProperties": false
       }
