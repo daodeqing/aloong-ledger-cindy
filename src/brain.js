@@ -43,7 +43,7 @@ function checkReminders(mobilePageId){
   if(!candidates.length)return;
   // Persist before notification: at most one attempt per subscription/day even after a crash.
   await ledger.dispatch('mark_reminders',{ids:candidates.map(x=>x.id)});
-  const result=await cindy.send({type:'notify',text:candidates.length+' 项订阅到期待确认，请打开阿龍记账。确认已扣款后才会入账。',tone:'warning',...(mobilePageId?{mobilePageId}:{})});
+  const result=await cindy.send({type:'notify',text:candidates.length+' 项订阅到期待确认，请打开阿龍ai记账助手。确认已扣款后才会入账。',tone:'warning',...(mobilePageId?{mobilePageId}:{})});
   if(!result?.ok)channel.postMessage({type:'ledger-notice',message:'到期项已保留在工作台，本次轻提示未送达'});
  }).catch(e=>channel.postMessage({type:'ledger-notice',message:e.message}));
 }
