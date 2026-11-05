@@ -1,5 +1,13 @@
 (function(){
 'use strict';
+window.addEventListener('error', e => {
+ const n = document.getElementById('notice');
+ if (n) { n.style.display = 'block'; n.style.color = '#b5534c'; n.textContent = '页面脚本异常: ' + (e.message || e); }
+});
+window.addEventListener('unhandledrejection', e => {
+ const n = document.getElementById('notice');
+ if (n) { n.style.display = 'block'; n.style.color = '#b5534c'; n.textContent = '异步调用异常: ' + (e.reason?.message || e.reason); }
+});
 try{
 const C=LedgerCore,$=id=>document.getElementById(id),bc=new BroadcastChannel('liang-ledger');
 const forms={bill:$('bill'),subscription:$('subscription')};
@@ -55,14 +63,57 @@ bc.onmessage=e=>{
 async function connect(){
  return await send('ping',{},5000);
 }
-function setWrites(){document.querySelectorAll('[data-write]').forEach(b=>b.disabled=saving||!!unresolved);$('recovery').hidden=!unresolved;if(unresolved)$('pendingText').textContent='请求 '+unresolved.args.requestId+'；结果可能已保存，请先查询。';}
-async function recover(){if(!unresolved)return;try{const r=await send('query_request',{requestId:unresolved.args.requestId});if(r.state==='completed'){unresolved=null;storageSet('ledger-pending',null);$('retryPending').hidden=true;notice('已找到原请求，写入已完成。');resetAfterSave();setWrites();await refresh();}else{$('pendingText').textContent='尚未查到原请求。先核对账单或订阅，再手动重发同一请求；系统不会自动重发。';$('retryPending').hidden=false;}}catch(e){notice(e.message);}}
+function safeReqId(req){return req?.args?.requestId || req?.requestId || '';}
+function setWrites(){
+ try{
+  document.querySelectorAll('[data-write]').forEach(b=>b.disabled=saving);
+  const validPending=Boolean(unresolved && safeReqId(unresolved));
+  const rec=$('recovery');
+  if(rec)rec.hidden=!validPending;
+  const pt=$('pendingText');
+  if(pt&&validPending)pt.textContent='请求 '+safeReqId(unresolved)+'；结果可能已保存，请先查询。';
+ }catch(err){console.error('setWrites error',err);}
+}
+async function recover(){
+ if(!unresolved)return;
+ const reqId=safeReqId(unresolved);
+ if(!reqId){unresolved=null;storageSet('ledger-pending',null);setWrites();return;}
+ try{
+  const r=await send('query_request',{requestId:reqId});
+  if(r.state==='completed'){
+   unresolved=null;storageSet('ledger-pending',null);
+   $('retryPending').hidden=true;
+   notice('已找到原请求，写入已完成。');
+   resetAfterSave();setWrites();await refresh();
+  }else{
+   $('pendingText').textContent='尚未查到原请求。先核对账单或订阅，再手动重发同一请求；系统不会自动重发。';
+   $('retryPending').hidden=false;
+  }
+ }catch(e){notice(e.message);}
+}
 async function write(tool,args){
- if(unresolved)throw Error('有写入待确认，请先点击“查询原请求”');
- const request={tool,args:{...args,requestId:C.id()}};unresolved=request;storageSet('ledger-pending',request);saving=true;setWrites();
- try{const r=await send(tool,request.args);unresolved=null;storageSet('ledger-pending',null);return r;}
- catch(e){if(e.code!=='TIMEOUT'){unresolved=null;storageSet('ledger-pending',null);}else{try{const status=await send('query_request',{requestId:request.args.requestId});if(status.state==='completed'){unresolved=null;storageSet('ledger-pending',null);return status.result;}}catch{}}throw e;}
- finally{saving=false;setWrites();}
+ const reqId=C.id();
+ const request={tool,args:{...args,requestId:reqId}};
+ unresolved=request;storageSet('ledger-pending',request);saving=true;setWrites();
+ try{
+  const r=await send(tool,request.args);
+  unresolved=null;storageSet('ledger-pending',null);return r;
+ }catch(e){
+  if(e.code==='TIMEOUT'){
+   try{
+    const status=await send('query_request',{requestId:reqId});
+    if(status.state==='completed'){
+     unresolved=null;storageSet('ledger-pending',null);
+     return status.result;
+    }
+   }catch{}
+  }else{
+   unresolved=null;storageSet('ledger-pending',null);
+  }
+  throw e;
+ }finally{
+  saving=false;setWrites();
+ }
 }
 $('queryPending').onclick=recover;
 $('retryPending').onclick=async()=>{if(!unresolved)return;const p=unresolved;saving=true;setWrites();try{await send(p.tool,p.args);unresolved=null;storageSet('ledger-pending',null);resetAfterSave();notice('原请求已完成。');await refresh();}catch(e){notice(e.message);}finally{saving=false;setWrites();}};
@@ -132,6 +183,43 @@ async function exportAll(){const version=await send('export_token');const data={
 async function download(format){$('json').disabled=$('csv').disabled=true;try{const data=await exportAll();let content,type,name;if(format==='json'){content=JSON.stringify(data,null,2);type='application/json';name='阿龍记账-'+C.today()+'.json';}else{const rows=[['日期','收支','金额分','币种','分类','备注','账单标识','订阅标识','周期键'],...data.bills.map(x=>[x.occurred_on,x.kind,x.amount_cents,'CNY',categories.find(c=>c.key===x.category)?.label||x.category,x.note,x.id,x.subscription_id,x.period_key])];content='﻿'+rows.map(r=>r.map(C.csvCell).join(',')).join('\r\n');type='text/csv;charset=utf-8';name='阿龍记账-'+C.today()+'.csv';}const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notice('已生成'+name+'；请在下载位置确认文件。CSV 仅包含账单，完整备份请使用 JSON。');}catch(e){notice('导出失败：'+e.message);}finally{$('json').disabled=$('csv').disabled=false;}}
 $('json').onclick=()=>download('json');$('csv').onclick=()=>download('csv');
 window.addEventListener('pagehide',()=>{clearTimeout(draftTimer);for(const p of listeners.values()){clearTimeout(p.timer);p.reject(Error('页面已关闭'));}listeners.clear();bc.close();});
-(async()=>{setWrites();fillBillCategories();forms.subscription.elements.category.innerHTML=options('expense');forms.subscription.elements.category.value='digital';$('billCategory').insertAdjacentHTML('beforeend',categories.map(x=>'<option value="'+x.key+'">'+esc(x.label)+'</option>').join(''));defaults();try{const p=await connect();categories=p.categories;$('connectionStatus').textContent='已连接电脑账本';fillBillCategories();const draft=await send('get_draft',{clientId});if(draft.bill){assign(forms.bill,draft.bill);fillBillCategories();assign(forms.bill,draft.bill);}if(draft.subscription)assign(forms.subscription,draft.subscription);editBill=draft.editBill||null;editSub=draft.editSub||null;if(editBill){$('billTitle').textContent='编辑账单';$('cancelBill').hidden=false;}if(editSub){$('subTitle').textContent='编辑订阅';$('cancelSub').hidden=false;}defaults();await refresh();if(unresolved)await recover();}catch(e){$('connectionStatus').textContent='连接失败';notice(e.message);$('list').innerHTML='<div class="empty"><strong>暂时没有连上账本</strong><p>请确认电脑上的 Cindy 与阿龍记账已启用，然后点击“重新连接”。</p></div>';}})();
+(async()=>{
+ try{
+  setWrites();
+  fillBillCategories();
+  if(forms.subscription?.elements?.category){
+   forms.subscription.elements.category.innerHTML=options('expense');
+   forms.subscription.elements.category.value='digital';
+  }
+  const bcSelect=$('billCategory');
+  if(bcSelect&&bcSelect.options.length<=1){
+   bcSelect.insertAdjacentHTML('beforeend',categories.map(x=>'<option value="'+x.key+'">'+esc(x.label)+'</option>').join(''));
+  }
+  defaults();
+ }catch(preErr){
+  console.error('Pre-init error',preErr);
+ }
+ try{
+  const p=await connect();
+  categories=p.categories;
+  $('connectionStatus').textContent='已连接电脑账本';
+  fillBillCategories();
+  try{
+   const draft=await send('get_draft',{clientId},3000);
+   if(draft.bill){assign(forms.bill,draft.bill);fillBillCategories();assign(forms.bill,draft.bill);}
+   if(draft.subscription)assign(forms.subscription,draft.subscription);
+   editBill=draft.editBill||null;editSub=draft.editSub||null;
+   if(editBill){$('billTitle').textContent='编辑账单';$('cancelBill').hidden=false;}
+   if(editSub){$('subTitle').textContent='编辑订阅';$('cancelSub').hidden=false;}
+  }catch(draftErr){console.warn('Draft load failed',draftErr);}
+  defaults();
+  await refresh();
+  if(unresolved)await recover();
+ }catch(e){
+  $('connectionStatus').textContent='连接失败';
+  notice(e.message);
+  $('list').innerHTML='<div class="empty"><strong>暂时没有连上账本</strong><p>请确认电脑上的 Cindy 与阿龍记账已启用，然后点击“重新连接”。</p></div>';
+ }
+})();
 }catch(error){const notice=document.getElementById('notice');if(notice)notice.textContent='页面初始化失败：'+error.message;const list=document.getElementById('list');if(list)list.textContent='请重新打开工作台；若仍失败，请更新插件。';console.error(error);}
 })();

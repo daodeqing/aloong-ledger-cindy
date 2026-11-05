@@ -1,6 +1,6 @@
 # 阿龍记账 · Cindy 插件
 
-独立的本地个人账本，插件 id 为 liang-ledger，版本 0.2.1。使用 Cindy Library SQLite，运行时不依赖 ALOONG 服务器、账号、Node、Codex 或 Android 服务。
+独立的本地个人账本，插件 id 为 liang-ledger，版本 0.2.2。使用 Cindy Library SQLite，运行时不依赖 ALOONG 服务器、账号、Node、Codex 或 Android 服务。
 
 ## 使用
 
