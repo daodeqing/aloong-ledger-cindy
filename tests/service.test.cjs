@@ -67,3 +67,51 @@ test('重启后数据库/幂等回执/草稿恢复，不可用库不重建',asyn
 test('导出和查询分页完整；手机单帧小于 48 KiB；CSV 公式注入',async()=>{
  const {a,d}=fixture();try{for(let i=0;i<55;i++)await d('record_bill',bill({note:'测'.repeat(300)}));let all=[];for(let offset=0;;offset+=20){const r=await d('export_page',{table:'bills',offset});assert.ok(Buffer.byteLength(JSON.stringify(r))<48*1024);all.push(...r);if(r.length<20)break;}assert.equal(all.length,55);const q=await d('query_bills',{});assert.equal(q.items.length,20);assert.equal(q.total,55);assert.ok(Buffer.byteLength(JSON.stringify(q))<48*1024);assert.equal(C.csvCell('=1+1'),'"\'=1+1"');assert.equal(C.csvCell('a"b'),'"a""b"');}finally{a.close();}
 });
+
+test('账单回收站：删除幂等、隐藏与恢复、并发版本、汇总趋势和备份',async()=>{
+ const {a,d}=fixture();try{
+  const x=await d('record_bill',bill({amount:'12.34'}));
+  const req={requestId:uid(),id:x.id,revision:1,action:'delete'};
+  const deleted=await d('edit_bill',req);assert.equal(deleted.revision,2);assert.equal((await d('edit_bill',req)).revision,2);
+  assert.equal((await d('query_bills',{})).total,0);assert.equal((await d('query_bills',{deletedOnly:true})).total,1);
+  let sum=await d('get_summary',{month:'2028-04'});assert.equal(sum.expense_cents,0);assert.equal(sum.bill_count,0);assert.equal(sum.daily[0].expense_cents,0);
+  await assert.rejects(d('edit_bill',bill({id:x.id,revision:2})),{code:'RECORD_DELETED'});
+  await assert.rejects(d('edit_bill',{requestId:uid(),id:x.id,revision:1,action:'restore'}),{code:'STALE_REVISION'});
+  assert.equal((await d('export_page',{table:'deleted_records'})).length,1);
+  await d('edit_bill',{requestId:uid(),id:x.id,revision:2,action:'restore'});
+  sum=await d('get_summary',{month:'2028-04'});assert.equal(sum.expense_cents,1234);assert.equal(sum.daily[0].expense_cents,1234);assert.equal(sum.bill_count,1);
+  assert.equal((await d('query_bills',{deletedOnly:true})).total,0);
+ }finally{a.close();}
+});
+test('删除订阅停止提醒，历史账单与周期保留；删除扣款账单后不能重复确认',async()=>{
+ const {a,d}=fixture();try{
+  let s=await d('create_subscription',sub());const period=s.period_key;
+  const charge=await d('confirm_subscription_charge',{requestId:uid(),id:s.id,periodKey:period});
+  s=(await d('list_subscriptions',{})).items[0];
+  await d('update_subscription',{requestId:uid(),id:s.id,revision:s.revision,action:'delete'});
+  assert.equal((await d('list_subscriptions',{})).total,0);assert.equal((await d('due_items',{})).total,0);assert.equal((await d('reminder_candidates',{})).length,0);
+  assert.equal((await d('query_bills',{})).total,1);assert.equal((await d('get_summary',{})).subscriptions.active_count,0);
+  await assert.rejects(d('confirm_subscription_charge',{requestId:uid(),id:s.id,periodKey:period}),{code:'RECORD_DELETED'});
+  s=(await d('list_subscriptions',{deletedOnly:true})).items[0];await d('update_subscription',{requestId:uid(),id:s.id,revision:s.revision,action:'restore'});
+  assert.equal((await d('due_items',{})).total,1);
+  await d('edit_bill',{requestId:uid(),id:charge.billId,revision:1,action:'delete'});
+  const again=await d('confirm_subscription_charge',{requestId:uid(),id:s.id,periodKey:period});assert.equal(again.already_processed,true);assert.equal((await d('query_bills',{})).total,0);
+  assert.equal((await d('export_page',{table:'periods'})).length,1);
+ }finally{a.close();}
+});
+test('月图表：闰年29天、零填充、上月与月成本估算、已删除过滤',async()=>{
+ const {a,d}=fixture(()=> '2028-02-10');try{
+  await d('record_bill',bill({amount:'10',occurredOn:'2028-01-31'}));await d('record_bill',bill({amount:'20',occurredOn:'2028-02-09'}));
+  await d('record_bill',bill({amount:'30',kind:'income',category:'salary',occurredOn:'2028-02-29'}));
+  await d('create_subscription',sub({amount:'120',cycle:'yearly'}));await d('create_subscription',sub({amount:'12',cycle:'weekly'}));
+  const sum=await d('get_summary',{month:'2028-02'});assert.equal(sum.daily.length,29);assert.equal(sum.daily[8].expense_cents,2000);assert.equal(sum.daily[28].income_cents,3000);assert.equal(sum.daily[0].income_cents,0);assert.equal(sum.previous_expense_cents,1000);assert.equal(sum.daily_average_cents,200);assert.equal(sum.max_expense_cents,2000);assert.equal(sum.subscriptions.estimated_monthly_cents,6200);
+  assert.ok(Buffer.byteLength(JSON.stringify(sum))<48*1024);
+ }finally{a.close();}
+});
+test('SVG折线与扇形：无数据、单分类整圆、超六分类合并与文本转义',()=>{
+ require('../src/charts.js');const node={innerHTML:''};
+ LedgerCharts.pie(node,[]);assert.match(node.innerHTML,/还没有支出/);
+ LedgerCharts.pie(node,[{label:'<img onerror=x>',cents:100}]);assert.match(node.innerHTML,/<circle/);assert.ok(!node.innerHTML.includes('<img'));assert.match(node.innerHTML,/100.0%/);
+ LedgerCharts.pie(node,Array.from({length:8},(_,i)=>({label:'分类'+i,cents:100})));assert.match(node.innerHTML,/其他/);assert.equal((node.innerHTML.match(/<li>/g)||[]).length,6);
+ LedgerCharts.trend(node,Array.from({length:31},(_,i)=>({date:'2028-01-'+(i+1),income_cents:0,expense_cents:0})));assert.equal((node.innerHTML.match(/<polyline/g)||[]).length,2);assert.ok(!/NaN|Infinity/.test(node.innerHTML));
+});
