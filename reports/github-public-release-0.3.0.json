@@ -1,0 +1,18 @@
+{
+  "repository": "daodeqing/aloong-ledger-cindy",
+  "visibility": "public",
+  "sourceCommit": "1f09938fdb434ef00b149b3450b2d859f9f5e4f4",
+  "sourceFilesUploaded": 32,
+  "releaseId": 434966046,
+  "tag": "v0.3.0",
+  "draft": false,
+  "prerelease": true,
+  "url": "https://github.com/daodeqing/aloong-ledger-cindy/releases/tag/v0.3.0",
+  "assetId": 712731090,
+  "assetName": "liang-ledger-0.3.0.cindy",
+  "assetState": "uploaded",
+  "assetSize": 1019906,
+  "assetSha256": "db255b319f904adf5e24f5a08e1e14e48873cd5178d129465cf36ba21a3bfdd3",
+  "sourceLicense": "MIT",
+  "assetRights": "Existing ALOONG image rights retained separately"
+}

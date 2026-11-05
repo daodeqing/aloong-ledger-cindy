@@ -1,105 +1,153 @@
 {
   "status": "completed",
-  "bytesMovedToRecycleBin": 155609375,
-  "projectSpaceRecoveredMB": 148.4,
+  "bytesMovedToRecycleBin": 94089044,
+  "projectSpaceRecoveredMB": 89.73,
   "diskBytesFreed": 0,
   "note": "已移出项目；回收站未清空，磁盘空间未实际释放",
   "items": [
     {
       "target": ".cache",
       "status": "recycled",
-      "bytes": 154837586,
+      "bytes": 93852168,
       "files": [
         {
+          "name": ".cache/desktop.b64",
+          "bytes": 132009
+        },
+        {
+          "name": ".cache/final-desktop.b64",
+          "bytes": 131693
+        },
+        {
+          "name": ".cache/final-mobile-dark.b64",
+          "bytes": 73629
+        },
+        {
+          "name": ".cache/final-mobile-form.b64",
+          "bytes": 76281
+        },
+        {
+          "name": ".cache/final-mobile.b64",
+          "bytes": 73473
+        },
+        {
+          "name": ".cache/finish_api.py",
+          "bytes": 2267
+        },
+        {
+          "name": ".cache/github_finish.py",
+          "bytes": 1208
+        },
+        {
+          "name": ".cache/host-preload.b64",
+          "bytes": 13076
+        },
+        {
+          "name": ".cache/mobile-dark.b64",
+          "bytes": 73629
+        },
+        {
+          "name": ".cache/mobile-form.b64",
+          "bytes": 76337
+        },
+        {
+          "name": ".cache/mobile.b64",
+          "bytes": 73481
+        },
+        {
+          "name": ".cache/preview.log",
+          "bytes": 31
+        },
+        {
+          "name": ".cache/preview.pid",
+          "bytes": 5
+        },
+        {
           "name": ".cache/preview.sqlite",
-          "bytes": 65536
+          "bytes": 86016
         },
         {
-          "name": ".cache/restart-0b7ade97-313c-466b-9012-a40b911e26fc.sqlite",
-          "bytes": 65536
+          "name": ".cache/receipt-fixture.png",
+          "bytes": 31797
         },
         {
-          "name": ".cache/restart-3143b05b-6606-4f56-85d0-14a089282b01.sqlite",
-          "bytes": 61440
+          "name": ".cache/receipt_fixture.py",
+          "bytes": 540
         },
         {
-          "name": ".cache/restart-cfde30f4-4149-478c-84df-7dfb3bdfec2d.sqlite",
-          "bytes": 65536
+          "name": ".cache/release_report.py",
+          "bytes": 2459
         },
         {
-          "name": ".cache/restart-faeb8659-ca68-46bd-a166-8970e7868df6.sqlite",
-          "bytes": 65536
+          "name": ".cache/restart-22bf025e-1f15-4204-9320-476d272616fb.sqlite",
+          "bytes": 86016
         },
         {
-          "name": ".cache/restart-test.sqlite",
-          "bytes": 61440
+          "name": ".cache/restart-4dda64ed-a45e-4dd6-870c-8410c11ed630.sqlite",
+          "bytes": 86016
         },
         {
-          "name": ".cache/tools/gh.exe",
-          "bytes": 41483064
+          "name": ".cache/restart-80a6960d-04b8-400e-8328-8e6e448cf5b7.sqlite",
+          "bytes": 86016
+        },
+        {
+          "name": ".cache/restart-c595d896-5cae-4a7e-b41e-638b8f5ad8c5.sqlite",
+          "bytes": 86016
+        },
+        {
+          "name": ".cache/restart-d45c85de-41f0-490e-a149-ab294045711a.sqlite",
+          "bytes": 86016
+        },
+        {
+          "name": ".cache/review_fixes.py",
+          "bytes": 1740
+        },
+        {
+          "name": ".cache/style_upgrade.py",
+          "bytes": 4827
+        },
+        {
+          "name": ".cache/ui_upgrade.py",
+          "bytes": 10025
+        },
+        {
+          "name": ".cache/upgrade.py",
+          "bytes": 15187
+        },
+        {
+          "name": ".cache/upload_source.py",
+          "bytes": 858
+        },
+        {
+          "name": ".cache/write_docs.py",
+          "bytes": 7432
         },
         {
           "name": ".cache/tools/node.exe",
           "bytes": 92534088
-        },
-        {
-          "name": ".cache/impeccable/bin/0.1.18/impeccable.exe",
-          "bytes": 20435344
-        },
-        {
-          "name": ".cache/impeccable/bin/0.1.18/impeccable.exe.verified",
-          "bytes": 66
         }
       ]
     },
     {
-      "target": "evidence",
+      "target": ".impeccable\\review",
       "status": "recycled",
-      "bytes": 771789,
+      "bytes": 236876,
       "files": [
         {
-          "name": "evidence/ghostPreload.json",
-          "bytes": 14153
+          "name": ".impeccable/review/desktop.png",
+          "bytes": 97988
         },
         {
-          "name": "evidence/ghostPreload.ts",
-          "bytes": 9787
+          "name": ".impeccable/review/mobile-dark.png",
+          "bytes": 46191
         },
         {
-          "name": "evidence/github-tree.json",
-          "bytes": 7760
+          "name": ".impeccable/review/mobile-form.png",
+          "bytes": 46913
         },
         {
-          "name": "evidence/libraryDbCore.json",
-          "bytes": 24253
-        },
-        {
-          "name": "evidence/libraryDbCore.ts",
-          "bytes": 17333
-        },
-        {
-          "name": "evidence/librarySlot.json",
-          "bytes": 96371
-        },
-        {
-          "name": "evidence/librarySlot.ts",
-          "bytes": 70823
-        },
-        {
-          "name": "evidence/manifest.json",
-          "bytes": 237537
-        },
-        {
-          "name": "evidence/manifest.ts",
-          "bytes": 175761
-        },
-        {
-          "name": "evidence/mobilePageService.json",
-          "bytes": 68049
-        },
-        {
-          "name": "evidence/mobilePageService.ts",
-          "bytes": 49962
+          "name": ".impeccable/review/mobile.png",
+          "bytes": 45784
         }
       ]
     }
