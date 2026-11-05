@@ -2,11 +2,11 @@
   "manifest": "passed",
   "paths": "passed",
   "javascript_syntax": "passed",
-  "business_tests": 9,
+  "business_tests": 21,
   "package": {
-    "bytes": 1005352,
-    "sha256": "c86f415ccb5a19a7ac646573bafb2a54f2aa75a204175a11c9351365748fd819",
-    "files": 32
+    "bytes": 1012854,
+    "sha256": "a5d3f33f5b6e4d6c58884fe03a89ba257f96034a146a0c1718cddfd368e1f3a2",
+    "files": 33
   },
   "runtime_dependencies": []
 }

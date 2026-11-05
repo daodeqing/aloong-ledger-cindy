@@ -17,17 +17,17 @@ def run():
         if r.returncode:raise RuntimeError(r.stdout+r.stderr)
         return r.stdout+r.stderr
     command([sys.executable,'-X','utf8',str(ROOT/'scripts/build.py')])
-    for p in list((ROOT/'src').glob('*.js'))+[ROOT/'plugin/main.js']:
+    for p in list((ROOT/'src').glob('*.js'))+[ROOT/'plugin/main.js',ROOT/'plugin/view.js']:
         command([str(node),'--check',str(p)])
     manifest=json.loads((ROOT/'plugin/ghost.json').read_text(encoding='utf-8'))
-    assert manifest['schemaVersion']==3 and manifest['id']=='liang-ledger' and manifest['version']=='0.2.2'
+    assert manifest['schemaVersion']==3 and manifest['id']=='liang-ledger' and manifest['version']=='0.2.3'
     assert manifest['command']=='记账' and manifest['library'] is True and manifest['notify'] is True
     assert manifest['mobile']['channels']==['liang-ledger']
     assert not set(manifest).intersection({'fs','network','node','subscribe','agent','android','deviceSync'})
     for p in [manifest['entry'],manifest['mainView']['html'],manifest['mobile']['mainView'],manifest['icon']]:
         assert (ROOT/'plugin'/p).is_file(),p
     assert len(manifest['tools'])==len({t['name'] for t in manifest['tools']})
-    output=command([str(node),'--test',str(ROOT/'tests/service.test.cjs'),str(ROOT/'tests/router.test.cjs'),str(ROOT/'tests/ai.test.cjs')])
+    output=command([str(node),'--test',str(ROOT/'tests/service.test.cjs'),str(ROOT/'tests/router.test.cjs'),str(ROOT/'tests/ai.test.cjs'),str(ROOT/'tests/transport.test.cjs')])
     (REPORTS/'business-tests.txt').write_text(output,encoding='utf-8')
     pack=ROOT/'plugin'/('liang-ledger-'+manifest['version']+'.cindy')
     package=None
@@ -38,10 +38,10 @@ def run():
             for n in names:
                 assert not n.startswith(('/',chr(92))) and '..' not in Path(n).parts,n
                 assert not any(s in n.split('/') for s in ['node_modules','tests','scripts','.cache','.git']),n
-            for n in ['ghost.json','main.js','main-view.html']:
+            for n in ['ghost.json','main.js','main-view.html','view.js']:
                 assert z.read(n)==(ROOT/'plugin'/n).read_bytes(),'安装包已过期，请重新 ghost_forge_pack: '+n
         package={'bytes':pack.stat().st_size,'sha256':hashlib.sha256(pack.read_bytes()).hexdigest(),'files':len(names)}
-    result={'manifest':'passed','paths':'passed','javascript_syntax':'passed','business_tests':13,'package':package,'runtime_dependencies':[]}
+    result={'manifest':'passed','paths':'passed','javascript_syntax':'passed','business_tests':21,'package':package,'runtime_dependencies':[]}
     (REPORTS/'verification.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(output);print(json.dumps(result,ensure_ascii=False,indent=2))
 if __name__=='__main__':run()

@@ -19,8 +19,9 @@ def build():
     template=template.replace('/* INLINE_STYLE */',(ROOT/'src/view.css').read_text(encoding='utf-8'))
     view_sources=[(ROOT/'src/core.js').read_text(encoding='utf-8'),
                   'globalThis.LedgerViewCategories='+json.dumps(categories,ensure_ascii=False)+';\n',
+                  (ROOT/'src/transport.js').read_text(encoding='utf-8'),
                   (ROOT/'src/app.js').read_text(encoding='utf-8')]
-    template=template.replace('/* INLINE_SCRIPT */','\n'.join(view_sources))
+    (PLUGIN/'view.js').write_text('\n'.join(view_sources),encoding='utf-8',newline='\n')
     (PLUGIN/'main-view.html').write_text(template,encoding='utf-8',newline='\n')
     print('Built plugin/main.js, ghost.json, main-view.html')
 if __name__=='__main__': build()

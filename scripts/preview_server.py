@@ -33,7 +33,11 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
     def reply(self,body,mime='application/json'):
         data=body.encode('utf-8') if isinstance(body,str) else body
-        self.send_response(200);self.send_header('Content-Type',mime);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
+        self.send_response(200);self.send_header('Content-Type',mime);self.send_header('Content-Length',str(len(data)))
+        self.send_header('Cache-Control','no-store')
+        if mime.startswith('text/html'):
+            self.send_header('Content-Security-Policy',"default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob:")
+        self.end_headers();self.wfile.write(data)
     def do_POST(self):
         if self.path!='/library':self.send_error(404);return
         req=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
@@ -42,10 +46,13 @@ class Handler(BaseHTTPRequestHandler):
         path=self.path.split('?')[0]
         if path=='/qa':return self.reply('<!doctype html><html><head><meta charset="utf-8"></head><body><iframe src="/brain" hidden></iframe><iframe id="phone" src="/main-view.html?bare=1" style="width:320px;height:900px;border:0"></iframe><iframe id="desktop" src="/main-view.html?bare=1" style="width:900px;height:900px;border:0"></iframe></body></html>','text/html;charset=utf-8')
         if path=='/wake':return self.reply('{"state":"running"}')
+        if path=='/preview-host.js':
+            return self.reply('window.cindy={library:r=>fetch("/library",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(r)}).then(x=>x.json()),send:async r=>({ok:true}),onHostMessage:f=>{}};','application/javascript;charset=utf-8')
         if path=='/brain':
-            return self.reply('<!doctype html><script>window.cindy={library:r=>fetch("/library",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(r)}).then(x=>x.json()),send:async r=>({ok:true}),onHostMessage:f=>{}};</script><script src="/main.js"></script>','text/html;charset=utf-8')
+            return self.reply('<!doctype html><script src="/preview-host.js"></script><script src="/main.js"></script>','text/html;charset=utf-8')
         if path in ['/','/main-view.html']:
             html=(ROOT/'plugin/main-view.html').read_text(encoding='utf-8')
+            html=html.replace('<main', '<p style="padding:12px;text-align:center">测试预览 · 独立测试账本，不连接 Cindy 正式数据。正式入口：Cindy → 更多 → 阿龍记账。</p><main',1)
             if 'bare=1' not in self.path:html=html.replace('<body>','<body><iframe src="/brain" hidden title="Preview host"></iframe>',1)
             return self.reply(html,'text/html;charset=utf-8')
         p=(ROOT/'plugin'/path.lstrip('/')).resolve()

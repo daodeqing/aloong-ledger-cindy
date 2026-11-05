@@ -2,11 +2,11 @@
   "schemaVersion": 3,
   "id": "liang-ledger",
   "name": "阿龍记账",
-  "version": "0.1.0",
+  "version": "0.2.3",
   "description": "电脑与绑定手机共用的本地个人账本：账单、月度汇总、分类统计和订阅到期确认。",
-  "whenToUse": "需要记录收入支出、查询账单、查看月度与分类汇总、管理订阅或确认订阅已扣款时使用",
+  "whenToUse": "需要手动或用自然语言记录收入支出、查询账单、查看月度与分类汇总、管理订阅或确认订阅已扣款时使用",
   "minCindyVersion": "0.1.125",
-  "releaseNotes": "首个本地个人账本版本，支持账单编辑、订阅自然周期与确认入账、电脑和手机工作台、JSON/CSV 导出。",
+  "releaseNotes": "修复工作台内联脚本被 Cindy 安全策略拦截导致按钮无响应；脚本改为包内同源文件。连接先校验唤醒结果，再握手，只重试只读握手；账单与 AI 请求只发送一次，超时后查询原写入，防止重复入账与重复模型调用。区分临时预览与正式账本入口，保留已有数据与插件身份。",
   "entry": "main.js",
   "launch": "on-demand",
   "command": "记账",
@@ -24,7 +24,31 @@
   },
   "library": true,
   "notify": true,
+  "showTaskPreferences": true,
+  "cindy": {
+    "text": [
+      "oneshot"
+    ]
+  },
   "tools": [
+    {
+      "name": "parse_ledger_text",
+      "description": "用 Cindy 快问快答把一句自然语言解析为一条账单或订阅草稿。只返回待核对字段，不保存、不入账；调用模型可能产生费用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "例如：今天午饭 23.5 元；或视频会员每月 25 元，下月 1 日扣款",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
     {
       "name": "record_bill",
       "description": "记录一笔账单，返回整数分账单。收支由 kind 指定。",

@@ -1,11 +1,12 @@
 # 阿龍记账 · Cindy 插件
 
-独立的本地个人账本，插件 id 为 liang-ledger，版本 0.2.2。使用 Cindy Library SQLite，运行时不依赖 ALOONG 服务器、账号、Node、Codex 或 Android 服务。
+独立的本地个人账本，插件 id 为 liang-ledger，版本 0.2.3。使用 Cindy Library SQLite，运行时不依赖 ALOONG 服务器、账号、Node、Codex 或 Android 服务。
 
 ## 使用
 
-1. 将 [plugin/liang-ledger-0.2.1.cindy](plugin/liang-ledger-0.2.1.cindy) 导入 Cindy，并确认宿主展示的权限。
+1. 将 [plugin/liang-ledger-0.2.3.cindy](plugin/liang-ledger-0.2.3.cindy) 导入 Cindy，并确认宿主展示的权限。
 2. 从 Cindy 左侧打开“阿龍记账”，或在聊天中输入 $记账。
+   若入口被收起，打开左侧“更多 → 阿龍记账”。浏览器里的 `127.0.0.1:8787` / `8789` 是临时测试预览，不连接正式账本，测试服务关闭后会失效。更新后请关闭旧工作台再重新打开。
 3. 记录支出/收入、查看今日或历史账单、编辑账单、按月看汇总与分类。
 4. 添加每周、每月或每年订阅。到期后点“确认已扣款”才入账，也可跳过、暂停或归档。
 5. 手机从绑定电脑的插件工作台打开。电脑必须在线，手机不持有离线账本。

@@ -32,7 +32,16 @@
     return date(d.toISOString().slice(0,10));
   }
   function canonical(obj) { if(Array.isArray(obj)) return '['+obj.map(canonical).join(',')+']'; if(obj&&typeof obj==='object') return '{'+Object.keys(obj).sort().map(k=>JSON.stringify(k)+':'+canonical(obj[k])).join(',')+'}'; return JSON.stringify(obj); }
-  function id() { return crypto.randomUUID(); }
+  function id() {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') globalThis.crypto.getRandomValues(bytes);
+    else for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 256);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = Array.from(bytes, value => value.toString(16).padStart(2, '0'));
+    return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' + hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10).join('');
+  }
   const money=c=>(c/100).toFixed(2);
   const csvCell=v=>{let s=String(v??''); if(/^[=+\-@\t\r]/.test(s))s="'"+s; return '"'+s.replaceAll('"','""')+'"';};
   root.LedgerCore={amount,date,today,month,nextDue,text,fail,canonical,id,money,csvCell,MAX_CENTS};
@@ -40,7 +49,7 @@
 
 globalThis.LedgerCategories=[{"key": "food", "label": "餐饮", "type": "expense"}, {"key": "shopping", "label": "购物", "type": "expense"}, {"key": "transport", "label": "交通", "type": "expense"}, {"key": "phone", "label": "通讯", "type": "expense"}, {"key": "clothes", "label": "服饰", "type": "expense"}, {"key": "beauty", "label": "美容", "type": "expense"}, {"key": "housing", "label": "住房", "type": "expense"}, {"key": "travel", "label": "旅行", "type": "expense"}, {"key": "digital", "label": "数码", "type": "expense"}, {"key": "medical", "label": "医疗", "type": "expense"}, {"key": "pet", "label": "宠物", "type": "expense"}, {"key": "express", "label": "快递", "type": "expense"}, {"key": "fun", "label": "娱乐", "type": "expense"}, {"key": "sport", "label": "运动", "type": "expense"}, {"key": "family", "label": "亲子", "type": "expense"}, {"key": "social", "label": "社交", "type": "expense"}, {"key": "daily", "label": "日用", "type": "expense"}, {"key": "education", "label": "教育", "type": "expense"}, {"key": "finance", "label": "理财", "type": "expense"}, {"key": "transfer", "label": "转账", "type": "expense"}, {"key": "other_expense", "label": "其他支出", "type": "expense"}, {"key": "salary", "label": "工资", "type": "income"}, {"key": "investment", "label": "投资收益", "type": "income"}, {"key": "transfer_in", "label": "他人转入", "type": "income"}, {"key": "bonus", "label": "红包收入", "type": "income"}, {"key": "refund", "label": "退款", "type": "income"}, {"key": "credit", "label": "信用借还", "type": "income"}, {"key": "other_income", "label": "其他收入", "type": "income"}];
 
-const LEDGER_TOOLS=["record_bill", "edit_bill", "query_bills", "get_summary", "list_subscriptions", "create_subscription", "update_subscription", "confirm_subscription_charge", "skip_subscription_period", "pause_subscription", "query_request"];
+const LEDGER_TOOLS=["parse_ledger_text", "record_bill", "edit_bill", "query_bills", "get_summary", "list_subscriptions", "create_subscription", "update_subscription", "confirm_subscription_charge", "skip_subscription_period", "pause_subscription", "query_request"];
 
 /* The only writer is the computer plugin brain. Host db.batch is atomic. */
 (function(root){
@@ -102,6 +111,38 @@ const channel=new BroadcastChannel('liang-ledger');
 const publicTools=new Set(LEDGER_TOOLS);
 const pageTools=new Set([...publicTools,'ping','due_items','get_draft','save_draft','export_page','export_token']);
 let reminderTail=Promise.resolve();
+function validateAiDraft(draft){
+ if(!draft||typeof draft!=='object')LedgerCore.fail('AI_INVALID_DRAFT','AI 没有返回可识别的内容，请换个说法');
+ const category=LedgerCategories.find(item=>item.key===draft.category);
+ if(draft.type==='bill'){
+  const kind=draft.kind==='income'?'income':'expense';
+  if(!category||category.type!==kind)LedgerCore.fail('AI_INVALID_CATEGORY','AI 返回的分类不匹配，请手动选择分类');
+  return {type:'bill',kind,amount:LedgerCore.money(LedgerCore.amount(draft.amount)),category:category.key,note:LedgerCore.text(draft.note,'备注',300,true),occurredOn:draft.occurredOn?LedgerCore.date(draft.occurredOn):LedgerCore.today()};
+ }
+ if(draft.type==='subscription'){
+  if(!category||category.type!=='expense')LedgerCore.fail('AI_INVALID_CATEGORY','订阅只能使用支出分类，请手动选择');
+  if(!['weekly','monthly','yearly'].includes(draft.cycle))LedgerCore.fail('AI_INVALID_CYCLE','请补充每周、每月或每年的周期');
+  return {type:'subscription',name:LedgerCore.text(draft.name,'订阅名称',80),amount:LedgerCore.money(LedgerCore.amount(draft.amount)),category:category.key,cycle:draft.cycle,nextDue:draft.nextDue?LedgerCore.date(draft.nextDue):'',note:LedgerCore.text(draft.note,'备注',300,true)};
+ }
+ LedgerCore.fail('AI_INVALID_DRAFT','请说明要记一笔账单，还是添加一个周期订阅');
+}
+async function parseLedgerText(args,context){
+ const input=LedgerCore.text(args.text,'记账描述',1000);
+ const categories=LedgerCategories.map(item=>({key:item.key,label:item.label,type:item.type}));
+ const prompt=[
+  '你是本地记账解析器。把用户的一句话解析成一条账单或一条周期订阅草稿，只输出 JSON，不执行写入。',
+  '账单格式：{"type":"bill","kind":"expense|income","amount":"正数元","category":"分类key","note":"简短备注","occurredOn":"YYYY-MM-DD"}。',
+  '订阅格式：{"type":"subscription","name":"名称","amount":"正数元","category":"支出分类key","cycle":"weekly|monthly|yearly","nextDue":"YYYY-MM-DD或空字符串","note":"备注"}。',
+  '分类必须原样选择：'+JSON.stringify(categories)+'。无法确定支出分类用 other_expense，收入分类用 other_income。',
+  '电脑本地今天是 '+LedgerCore.today()+'。金额最多两位小数，不要根据上下文编造付款事实。',
+  '用户输入：'+input,
+ ].join('\n');
+ const response=await cindy.send({type:'cindy-request',kind:'oneshot_text',prompt,expectJson:true,maxTokens:500,...(context.callId?{callId:context.callId}:{})});
+ if(!response?.ok)LedgerCore.fail(response?.errorCode||'AI_UNAVAILABLE',response?.message||'AI 暂时不可用，请检查模型配置后重试');
+ let draft;
+ try{draft=JSON.parse(response.text);}catch{LedgerCore.fail('AI_INVALID_JSON','模型返回格式无法识别，请重试或手动填写');}
+ return {draft:validateAiDraft(draft),model:response.model||''};
+}
 function checkReminders(mobilePageId){
  reminderTail=reminderTail.then(async()=>{
   const candidates=await ledger.dispatch('reminder_candidates',{});
@@ -112,14 +153,15 @@ function checkReminders(mobilePageId){
   if(!result?.ok)channel.postMessage({type:'ledger-notice',message:'到期项已保留在工作台，本次轻提示未送达'});
  }).catch(e=>channel.postMessage({type:'ledger-notice',message:e.message}));
 }
-async function execute(op,args){
+async function execute(op,args,context={}){
  if(op==='ping'){await ledger.init();return {ready:true,today:LedgerCore.today(),currency:'CNY',categories:LedgerCategories};}
+ if(op==='parse_ledger_text')return parseLedgerText(args,context);
  return ledger.dispatch(op,args||{});
 }
 channel.onmessage=async event=>{
  const m=event.data;if(!m||m.type!=='ledger-request'||typeof m.requestId!=='string'||!pageTools.has(m.tool))return;
  try{
-  const result=await execute(m.tool,m.args);
+  const result=await execute(m.tool,m.args,{mobilePageId:m.mobilePageId});
   channel.postMessage({type:'ledger-response',requestId:m.requestId,ok:true,result});
   if(LedgerService.WRITES.has(m.tool)&&m.tool!=='save_draft')channel.postMessage({type:'ledger-changed'});
   if(m.tool==='ping')checkReminders(m.mobilePageId);
@@ -129,7 +171,7 @@ cindy.onHostMessage(async msg=>{
  if(msg.type!=='tool-call')return;
  try{
   if(!publicTools.has(msg.tool))LedgerCore.fail('UNKNOWN_TOOL','未知工具，请重新发现插件工具');
-  const result=await execute(msg.tool,msg.args);
+  const result=await execute(msg.tool,msg.args,{callId:msg.callId,mobilePageId:msg.mobilePageId});
   await cindy.send({type:'tool-result',callId:msg.callId,ok:true,result});
   if(LedgerService.WRITES.has(msg.tool)&&msg.tool!=='save_draft')channel.postMessage({type:'ledger-changed'});
   checkReminders(msg.mobilePageId);
