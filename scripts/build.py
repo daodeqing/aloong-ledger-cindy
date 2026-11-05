@@ -17,7 +17,10 @@ def build():
     (PLUGIN/'ghost.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
     template=(ROOT/'src/view.html').read_text(encoding='utf-8')
     template=template.replace('/* INLINE_STYLE */',(ROOT/'src/view.css').read_text(encoding='utf-8'))
-    template=template.replace('/* INLINE_SCRIPT */',(ROOT/'src/core.js').read_text(encoding='utf-8')+'\n'+(ROOT/'src/app.js').read_text(encoding='utf-8'))
+    view_sources=[(ROOT/'src/core.js').read_text(encoding='utf-8'),
+                  'globalThis.LedgerViewCategories='+json.dumps(categories,ensure_ascii=False)+';\n',
+                  (ROOT/'src/app.js').read_text(encoding='utf-8')]
+    template=template.replace('/* INLINE_SCRIPT */','\n'.join(view_sources))
     (PLUGIN/'main-view.html').write_text(template,encoding='utf-8',newline='\n')
     print('Built plugin/main.js, ghost.json, main-view.html')
 if __name__=='__main__': build()

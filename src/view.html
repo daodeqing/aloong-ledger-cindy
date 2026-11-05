@@ -1,15 +1,116 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>阿龍记账</title><style>/* INLINE_STYLE */</style></head>
-<body><main class="shell">
-<header class="top"><div><h1>阿龍记账</h1><p class="muted">本地个人账本 · 人民币</p></div><div class="actions"><button id="refresh" class="secondary">刷新账本</button><button id="json" class="secondary">导出 JSON</button><button id="csv" class="secondary">导出 CSV</button></div></header>
-<div id="notice" role="status" aria-live="polite"></div>
-<section id="recovery" hidden><strong>有一项写入结果待确认</strong><p id="pendingText"></p><button id="queryPending">查询原请求</button><button id="retryPending" class="secondary" hidden>重发原请求</button></section>
-<section aria-label="月度汇总" class="summary-section"><div class="section-head"><h2>月度收支</h2><label>月份 <input id="month" type="month" aria-label="汇总月份"></label></div><div class="summary"><div><span>支出</span><strong id="expense">—</strong></div><div><span>收入</span><strong id="income">—</strong></div><div><span>结余</span><strong id="net">—</strong></div><button id="goDue" class="secondary"><span>到期待确认</span><strong id="due">—</strong></button></div></section>
-<nav class="tabs" aria-label="账本内容"><button data-tab="today" aria-pressed="true">今日账单</button><button data-tab="history" aria-pressed="false">全部账单</button><button data-tab="subscriptions" aria-pressed="false">订阅</button><button data-tab="categories" aria-pressed="false">分类统计</button></nav>
-<div class="workspace"><section id="records" class="records"><div id="billControls" hidden><div class="filters"><label>从<input id="billFrom" type="date"></label><label>到<input id="billTo" type="date"></label><label>分类<select id="billCategory"><option value="">全部分类</option></select></label><button id="searchBills" class="secondary">查询</button></div></div><div id="subControls" class="filters" hidden><label>状态<select id="subStatus"><option value="all">全部</option><option value="active">启用</option><option value="paused">暂停</option><option value="archived">归档</option><option value="due">到期待确认</option></select></label><p class="muted">确认时默认记在本期到期日，账单可以随后编辑。</p></div><h2 id="listHeading">今日账单</h2><div id="list" aria-live="polite"><p class="empty">正在连接电脑上的账本…</p></div><div id="pager" class="pager"><button id="prev" class="secondary">上一页</button><span id="pageInfo"></span><button id="next" class="secondary">下一页</button></div></section>
-<aside id="editor"><div class="editor-tabs"><button id="showBill" class="secondary" aria-pressed="true">记一笔</button><button id="showSub" class="secondary" aria-pressed="false">添加订阅</button></div>
-<form id="bill" novalidate><h2 id="billTitle">记录账单</h2><div class="form-grid"><label>收支<select name="kind"><option value="expense">支出</option><option value="income">收入</option></select></label><label>金额（元）<input name="amount" inputmode="decimal" placeholder="0.00" required maxlength="14"></label><label>分类<select name="category"></select></label><label>日期<input name="occurredOn" type="date" required></label><label class="wide">备注<input name="note" maxlength="300" placeholder="例如：午餐"></label></div><p id="billError" class="error" role="alert"></p><div class="actions"><button type="submit" data-write>保存账单</button><button id="cancelBill" type="button" class="secondary" hidden>取消编辑</button></div></form>
-<form id="subscription" hidden novalidate><h2 id="subTitle">添加订阅</h2><div class="form-grid"><label class="wide">名称<input name="name" maxlength="80" placeholder="例如：视频会员" required></label><label>金额（元）<input name="amount" inputmode="decimal" placeholder="0.00" required maxlength="14"></label><label>周期<select name="cycle"><option value="monthly">每月</option><option value="weekly">每周</option><option value="yearly">每年</option></select></label><label>分类<select name="category"></select></label><label>下次到期<input name="nextDue" type="date" required></label><label class="wide">备注<input name="note" maxlength="300" placeholder="可选"></label></div><p class="hint">按原始扣款日计算；月底与闰年会自动调整。到期后由你确认或跳过。</p><p id="subError" class="error" role="alert"></p><div class="actions"><button type="submit" data-write>保存订阅</button><button id="cancelSub" type="button" class="secondary" hidden>取消编辑</button></div></form>
-<p id="draftStatus" class="hint"></p></aside></div>
-<footer>账本保存在 Cindy Library。手机需要绑定的电脑在线；Cindy 完全关闭时不会检查到期提醒。请定期导出保留副本。</footer>
-</main><script>/* INLINE_SCRIPT */</script></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>阿龍记账</title>
+  <style>/* INLINE_STYLE */</style>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true">
+    <symbol id="icon-book" viewBox="0 0 24 24"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5z"/><path d="M5 4.5v17M9 7h7M9 11h5"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8A7 7 0 0 1 18.7 7L20 12M4 12l1.3 5A7 7 0 0 0 17.9 16"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 16v4h14v-4"/></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark"><svg><use href="#icon-book"/></svg></span>
+        <div><h1>阿龍记账</h1><p>把每一笔，记得清楚</p></div>
+      </div>
+      <div class="header-actions">
+        <button id="quickAdd" class="button primary"><svg><use href="#icon-plus"/></svg><span>记一笔</span></button>
+        <button id="refresh" class="button quiet"><svg><use href="#icon-refresh"/></svg><span>重新连接</span></button>
+        <div class="export-actions" aria-label="导出账本">
+          <button id="json" class="button icon-button" title="导出 JSON" aria-label="导出 JSON"><svg><use href="#icon-download"/></svg><span>JSON</span></button>
+          <button id="csv" class="button icon-button" title="导出 CSV" aria-label="导出 CSV"><svg><use href="#icon-download"/></svg><span>CSV</span></button>
+        </div>
+      </div>
+    </header>
+
+    <div class="connection-line"><span id="connectionStatus">正在连接电脑账本</span><span>数据保存在本机</span></div>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section id="recovery" class="recovery" hidden>
+      <div><strong>有一项写入结果待确认</strong><p id="pendingText"></p></div>
+      <div class="recovery-actions"><button id="queryPending" class="button primary">查询原请求</button><button id="retryPending" class="button quiet" hidden>重发原请求</button></div>
+    </section>
+
+    <section class="overview" aria-labelledby="overviewTitle">
+      <div class="overview-heading">
+        <div><p class="section-label" id="overviewTitle">本月结余</p><strong id="net" class="balance">—</strong></div>
+        <label class="month-control"><svg><use href="#icon-calendar"/></svg><span class="sr-only">汇总月份</span><input id="month" type="month" aria-label="汇总月份"></label>
+      </div>
+      <div class="overview-bottom">
+        <div class="money-pair"><div><span class="money-label expense-dot">支出</span><strong id="expense">—</strong></div><div><span class="money-label income-dot">收入</span><strong id="income">—</strong></div></div>
+        <button id="goDue" class="due-button"><span>到期待确认</span><strong id="due">—</strong><svg><use href="#icon-arrow"/></svg></button>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <section class="activity" aria-labelledby="listHeading">
+        <nav class="tabs" aria-label="账本内容">
+          <button data-tab="today" aria-pressed="true">今日</button>
+          <button data-tab="history" aria-pressed="false">全部账单</button>
+          <button data-tab="subscriptions" aria-pressed="false">订阅</button>
+          <button data-tab="categories" aria-pressed="false">分类统计</button>
+        </nav>
+        <div id="billControls" class="filter-panel" hidden>
+          <div class="filters"><label>从<input id="billFrom" type="date"></label><label>到<input id="billTo" type="date"></label><label>分类<select id="billCategory"><option value="">全部分类</option></select></label><button id="searchBills" class="button quiet">查询</button></div>
+        </div>
+        <div id="subControls" class="filter-panel" hidden>
+          <div class="filters"><label>状态<select id="subStatus"><option value="all">全部</option><option value="active">启用</option><option value="paused">暂停</option><option value="archived">归档</option><option value="due">到期待确认</option></select></label><p>确认后才会记为本期支出</p></div>
+        </div>
+        <div class="section-heading"><h2 id="listHeading">今日账单</h2><span id="listHint">最近记录</span></div>
+        <div id="list" class="record-list" aria-live="polite"><div class="loading-block"><span></span><span></span><span></span></div></div>
+        <div id="pager" class="pager"><button id="prev" class="button quiet">上一页</button><span id="pageInfo"></span><button id="next" class="button quiet">下一页</button></div>
+      </section>
+
+      <aside id="editor" class="editor" aria-label="快速录入">
+        <div class="editor-tabs"><button id="showBill" aria-pressed="true">手动记账</button><button id="showSub" aria-pressed="false">订阅</button><button id="showAi" aria-pressed="false">AI 录入</button></div>
+        <form id="aiEntry" hidden novalidate>
+          <div class="form-heading"><div><p class="section-label">一句话记账</p><h2>先生成，再核对</h2></div><span>AI</span></div>
+          <label>账单或订阅描述<textarea id="aiText" rows="5" maxlength="1000" placeholder="例如：今天午饭 23.5 元&#10;或：视频会员每月 25 元，下月 1 日扣款" required></textarea></label>
+          <div class="ai-examples"><button type="button" data-example="今天午饭 23.5 元">午饭 23.5 元</button><button type="button" data-example="视频会员每月 25 元，下月 1 日扣款">添加月度订阅</button></div>
+          <p class="form-note">AI 只生成草稿，不会直接入账。模型可在插件详情的「模型与任务」中选择，调用可能产生模型费用。</p>
+          <p id="aiError" class="error" role="alert"></p>
+          <div class="form-actions"><button id="aiParse" type="submit" class="button primary"><svg><use href="#icon-arrow"/></svg><span id="aiParseLabel">生成待核对草稿</span></button></div>
+        </form>
+        <form id="bill" novalidate>
+          <div class="form-heading"><div><p class="section-label">快速记账</p><h2 id="billTitle">记录账单</h2></div><span>CNY</span></div>
+          <div class="form-grid">
+            <label class="wide">金额（元）<input name="amount" class="amount-input" inputmode="decimal" placeholder="0.00" required maxlength="14" autocomplete="off"></label>
+            <label>收支<select name="kind"><option value="expense">支出</option><option value="income">收入</option></select></label>
+            <label>分类<select name="category"></select></label>
+            <label class="wide">日期<input name="occurredOn" type="date" required></label>
+            <label class="wide">备注<input name="note" maxlength="300" placeholder="这笔钱花在了哪里？"></label>
+          </div>
+          <p id="billError" class="error" role="alert"></p>
+          <div class="form-actions"><button type="submit" class="button primary" data-write><svg><use href="#icon-check"/></svg>保存账单</button><button id="cancelBill" type="button" class="button quiet" hidden>取消编辑</button></div>
+        </form>
+        <form id="subscription" hidden novalidate>
+          <div class="form-heading"><div><p class="section-label">周期支出</p><h2 id="subTitle">添加订阅</h2></div><span>CNY</span></div>
+          <div class="form-grid">
+            <label class="wide">名称<input name="name" maxlength="80" placeholder="例如：视频会员" required></label>
+            <label>金额（元）<input name="amount" inputmode="decimal" placeholder="0.00" required maxlength="14" autocomplete="off"></label>
+            <label>周期<select name="cycle"><option value="monthly">每月</option><option value="weekly">每周</option><option value="yearly">每年</option></select></label>
+            <label>分类<select name="category"></select></label>
+            <label>下次到期<input name="nextDue" type="date" required></label>
+            <label class="wide">备注<input name="note" maxlength="300" placeholder="可选"></label>
+          </div>
+          <p class="form-note">按原始扣款日滚动。到期只提醒，由你确认或跳过。</p>
+          <p id="subError" class="error" role="alert"></p>
+          <div class="form-actions"><button type="submit" class="button primary" data-write><svg><use href="#icon-check"/></svg>保存订阅</button><button id="cancelSub" type="button" class="button quiet" hidden>取消编辑</button></div>
+        </form>
+        <p id="draftStatus" class="draft-status"></p>
+      </aside>
+    </div>
+    <footer><span>本地个人账本 · 人民币</span><span>手机依赖电脑在线，退出 Cindy 后不检查提醒</span></footer>
+  </main>
+  <script>/* INLINE_SCRIPT */</script>
+</body>
+</html>

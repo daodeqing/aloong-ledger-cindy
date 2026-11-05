@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-05",
+  "host_version": "0.1.125",
+  "plugin_id": "liang-ledger",
+  "namespace": "local",
+  "instance_id": "_ns__local__liang-ledger",
+  "installed": true,
+  "enabled": true,
+  "install_receipt": "installed",
+  "tool_discovery": true,
+  "initial_empty": true,
+  "record_bill": {
+    "request_id": "host-test-bill-20261105-001",
+    "amount_cents": 1234,
+    "note": "阿龍记账宿主验收测试",
+    "ok": true
+  },
+  "idempotency": {
+    "same_request_returned_same_bill": true,
+    "bill_count_after_retry": 1
+  },
+  "create_subscription": {
+    "amount_cents": 990,
+    "next_due": "2026-11-05",
+    "ok": true
+  },
+  "confirm_subscription": {
+    "confirmed": true,
+    "period_key": "7e333874-95df-4028-88b9-dfbb12c507fe:2026-11-05",
+    "bill_count_after_confirm": 2
+  },
+  "duplicate_subscription_confirm": {
+    "already_processed": true,
+    "duplicate_bill_created": false
+  },
+  "post_restart": {
+    "new_cindy_process_observed": true,
+    "bills": 2,
+    "expense_cents": 2224,
+    "subscription_next_due": "2026-12-05",
+    "data_recovered": true
+  },
+  "mobile_devices": {
+    "devices": [],
+    "verified": false,
+    "reason": "当前设备模拟器/真机清单为空"
+  },
+  "chat_command": {
+    "command": "$记账",
+    "installed_command_declared": true,
+    "direct_chat_roundtrip": false,
+    "reason": "通过已声明 command 与真实工具回执验收；未发送额外聊天消息避免污染任务"
+  },
+  "market_submission": {
+    "submitted": false,
+    "reason": "用户要求本机验收；手机未验收且公开市场流程尚未重新提交"
+  }
+}

@@ -14,7 +14,7 @@ Cindy 浏览器沙箱，原生 HTML/CSS/JavaScript；Python 构建与验证。�
 从莱阳记账提取本地个人账本，提供账单、汇总、订阅和到期确认。
 
 ## Capabilities and Constraints
-人民币整数分；自然周、月、年；订阅启用、暂停、归档；确认后入账；电脑在线才支持手机；完全关闭 Cindy 时没有后台提醒。无 ALOONG 服务器、账号、旧数据迁移或 Android 自动捕获。
+人民币整数分；自然周、月、年；订阅启用、暂停、归档；确认后入账；电脑在线才支持手机；完全关闭 Cindy 时没有后台提醒。AI 使用 Cindy 快问快答生成账单或订阅草稿，保存前由用户核对；模型在插件详情“模型与任务”中选择。无 ALOONG 服务器、账号、旧数据迁移或 Android 自动捕获。
 
 ## Brand Commitments
 名称“阿龍记账”。沿用 ALOONG 的中文分类与现有分类素材；界面遵循 Cindy Light/Dark。

@@ -14,6 +14,16 @@ test('金额：分精确解析、零负数、小数、溢出、NaN、科学计�
  for(const [v,c]of [['0.01',1],['0.29',29],['99.99',9999],['1000000000.00',100000000000]])assert.equal(C.amount(v),c);
  for(const v of ['0','-1','1.001','1e3','NaN',NaN,Infinity,'1000000000.01',{},' 1','01.00'])assert.throws(()=>C.amount(v));
 });
+test('页面标识在 randomUUID 不可用时仍能生成合法 UUID',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../src/core.js'),'utf8');
+ const context=vm.createContext({crypto:{getRandomValues(bytes){bytes.fill(7);return bytes;}}});
+ vm.runInContext(source,context);
+ assert.match(context.LedgerCore.id(),/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+ const withoutCrypto=vm.createContext({});
+ vm.runInContext(source,withoutCrypto);
+ assert.match(withoutCrypto.LedgerCore.id(),/^[0-9a-f-]{36}$/);
+});
+
 test('自然周期：31 日锚点恢复、闰年 2 月 29 日恢复、周跨年',()=>{
  assert.equal(C.nextDue('2027-01-31','monthly',1),'2027-02-28');assert.equal(C.nextDue('2027-01-31','monthly',2),'2027-03-31');
  assert.equal(C.nextDue('2028-01-31','monthly',1),'2028-02-29');assert.equal(C.nextDue('2028-01-31','monthly',2),'2028-03-31');

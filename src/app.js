@@ -1,8 +1,9 @@
 (function(){
 'use strict';
+try{
 const C=LedgerCore,$=id=>document.getElementById(id),bc=new BroadcastChannel('liang-ledger');
 const forms={bill:$('bill'),subscription:$('subscription')};
-let categories=[],tab='today',offset=0,total=0,items=[],summary=null,editBill=null,editSub=null,loading=false,saving=false,draftTimer,loadVersion=0;
+let categories=globalThis.LedgerViewCategories||[],tab='today',offset=0,total=0,items=[],summary=null,editBill=null,editSub=null,loading=false,saving=false,draftTimer,loadVersion=0;
 const listeners=new Map();
 function storageGet(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function storageSet(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
@@ -20,7 +21,20 @@ function send(tool,args={},timeout=12000){
  });
 }
 bc.onmessage=e=>{const m=e.data||{};if(m.type==='ledger-changed'){if(!saving&&!loading&&categories.length)refresh();return;}if(m.type==='ledger-notice'){notice(m.message);return;}if(m.type!=='ledger-response')return;const p=listeners.get(m.requestId);if(!p)return;listeners.delete(m.requestId);clearTimeout(p.timer);m.ok?p.resolve(m.result):p.reject(Object.assign(new Error(m.message||'操作失败，请刷新账本'),{code:m.errorCode}));};
-async function connect(){const r=await fetch('/wake');if(!r.ok)throw Error('无法唤醒插件，请在电脑 Cindy 中启用阿龍记账');let last;for(let i=0;i<8;i++){try{return await send('ping',{},900);}catch(e){last=e;}}throw last;}
+async function connect(){
+ const controller=new AbortController(),wakeTimer=setTimeout(()=>controller.abort(),5000);
+ try{
+  const response=await fetch('/wake',{signal:controller.signal,cache:'no-store'});
+  if(!response.ok)throw Error('无法唤醒插件，请在电脑 Cindy 中启用阿龍记账');
+ }catch(error){
+  throw Error(error.name==='AbortError'?'连接电脑账本超时，请点击“重新连接”':'无法唤醒插件，请在电脑 Cindy 中启用阿龍记账');
+ }finally{clearTimeout(wakeTimer);}
+ let last;
+ for(let attempt=0;attempt<4;attempt+=1){
+  try{return await send('ping',{},1500);}catch(error){last=error;if(attempt<3)await new Promise(resolve=>setTimeout(resolve,120));}
+ }
+ throw last;
+}
 function setWrites(){document.querySelectorAll('[data-write]').forEach(b=>b.disabled=saving||!!unresolved);$('recovery').hidden=!unresolved;if(unresolved)$('pendingText').textContent='请求 '+unresolved.args.requestId+'；结果可能已保存，请先查询。';}
 async function recover(){if(!unresolved)return;try{const r=await send('query_request',{requestId:unresolved.args.requestId});if(r.state==='completed'){unresolved=null;storageSet('ledger-pending',null);$('retryPending').hidden=true;notice('已找到原请求，写入已完成。');resetAfterSave();setWrites();await refresh();}else{$('pendingText').textContent='尚未查到原请求。先核对账单或订阅，再手动重发同一请求；系统不会自动重发。';$('retryPending').hidden=false;}}catch(e){notice(e.message);}}
 async function write(tool,args){
@@ -34,8 +48,9 @@ $('queryPending').onclick=recover;
 $('retryPending').onclick=async()=>{if(!unresolved)return;const p=unresolved;saving=true;setWrites();try{await send(p.tool,p.args);unresolved=null;storageSet('ledger-pending',null);resetAfterSave();notice('原请求已完成。');await refresh();}catch(e){notice(e.message);}finally{saving=false;setWrites();}};
 function options(kind){return categories.filter(x=>x.type===kind).map(x=>'<option value="'+x.key+'">'+esc(x.label)+'</option>').join('');}
 function fillBillCategories(){const old=forms.bill.elements.category.value;forms.bill.elements.category.innerHTML=options(forms.bill.elements.kind.value);if(categories.some(x=>x.key===old&&x.type===forms.bill.elements.kind.value))forms.bill.elements.category.value=old;}
-function showEditor(which){forms.bill.hidden=which!=='bill';forms.subscription.hidden=which!=='subscription';$('showBill').setAttribute('aria-pressed',String(which==='bill'));$('showSub').setAttribute('aria-pressed',String(which==='subscription'));}
-$('showBill').onclick=()=>showEditor('bill');$('showSub').onclick=()=>showEditor('subscription');
+function showEditor(which){forms.bill.hidden=which!=='bill';forms.subscription.hidden=which!=='subscription';$('aiEntry').hidden=which!=='ai';$('showBill').setAttribute('aria-pressed',String(which==='bill'));$('showSub').setAttribute('aria-pressed',String(which==='subscription'));$('showAi').setAttribute('aria-pressed',String(which==='ai'));}
+$('showBill').onclick=()=>showEditor('bill');$('showSub').onclick=()=>showEditor('subscription');$('showAi').onclick=()=>showEditor('ai');
+$('quickAdd').onclick=()=>{showEditor('bill');$('editor').scrollIntoView({block:'nearest'});forms.bill.elements.amount.focus();};
 function defaults(){if(!forms.bill.elements.occurredOn.value)forms.bill.elements.occurredOn.value=C.today();if(!forms.subscription.elements.nextDue.value)forms.subscription.elements.nextDue.value=C.nextDue(C.today(),'monthly',1);}
 function resetBill(){editBill=null;forms.bill.reset();fillBillCategories();defaults();$('billTitle').textContent='记录账单';$('cancelBill').hidden=true;$('billError').textContent='';}
 function resetSub(){editSub=null;forms.subscription.reset();defaults();$('subTitle').textContent='添加订阅';$('cancelSub').hidden=true;$('subError').textContent='';}
@@ -47,9 +62,26 @@ async function saveDraft(){if(saving||unresolved||!categories.length)return;cons
 for(const f of Object.values(forms))f.addEventListener('input',scheduleDraft);
 forms.bill.onsubmit=async e=>{e.preventDefault();clearTimeout(draftTimer);$('billError').textContent='';try{const a=values(forms.bill);C.amount(a.amount);C.date(a.occurredOn);await write(editBill?'edit_bill':'record_bill',{...a,...(editBill||{})});resetBill();scheduleDraft();notice('账单已保存。');await refresh();}catch(e){$('billError').textContent=e.message;}};
 forms.subscription.onsubmit=async e=>{e.preventDefault();clearTimeout(draftTimer);$('subError').textContent='';try{const a=values(forms.subscription);C.amount(a.amount);C.text(a.name,'订阅名称',80);C.date(a.nextDue);await write(editSub?'update_subscription':'create_subscription',{...a,...(editSub||{})});resetSub();scheduleDraft();notice('订阅已保存，到期后请确认或跳过本期。');await refresh();}catch(e){$('subError').textContent=e.message;}};
+document.querySelectorAll('[data-example]').forEach(button=>button.onclick=()=>{$('aiText').value=button.dataset.example;$('aiText').focus();});
+$('aiEntry').onsubmit=async event=>{
+ event.preventDefault();
+ const input=$('aiText').value.trim();
+ if(!input){$('aiError').textContent='请先描述一笔账单或订阅';return;}
+ $('aiError').textContent='';$('aiParse').disabled=true;$('aiParseLabel').textContent='AI 正在解析…';
+ try{
+  const result=await send('parse_ledger_text',{text:input},65000),draft=result.draft;
+  if(draft.type==='bill'){
+   resetBill();forms.bill.elements.kind.value=draft.kind;fillBillCategories();assign(forms.bill,{kind:draft.kind,amount:draft.amount,category:draft.category,note:draft.note,occurredOn:draft.occurredOn});showEditor('bill');notice('AI 账单草稿已填入，请核对金额、分类和日期后保存。');
+  }else{
+   resetSub();assign(forms.subscription,{name:draft.name,amount:draft.amount,category:draft.category,cycle:draft.cycle,nextDue:draft.nextDue,note:draft.note});showEditor('subscription');notice('AI 订阅草稿已填入，请核对周期和到期日后保存。');
+  }
+  $('editor').scrollIntoView({block:'nearest'});
+ }catch(error){$('aiError').textContent=error.message;}
+ finally{$('aiParse').disabled=false;$('aiParseLabel').textContent='生成待核对草稿';}
+};
 function chooseTab(t){tab=t;offset=0;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===t)));$('billControls').hidden=t!=='history';$('subControls').hidden=t!=='subscriptions';$('listHeading').textContent={today:'今日账单',history:'全部账单',subscriptions:'订阅',categories:'分类统计'}[t];showEditor(t==='subscriptions'?'subscription':'bill');refresh();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>chooseTab(b.dataset.tab));
-$('goDue').onclick=()=>{$('subStatus').value='due';chooseTab('subscriptions');};$('month').value=C.today().slice(0,7);$('month').onchange=()=>{offset=0;refresh();};$('subStatus').onchange=()=>{offset=0;refresh();};$('searchBills').onclick=()=>{offset=0;refresh();};$('refresh').onclick=async()=>{notice('');try{await connect();await refresh();}catch(e){notice(e.message);}};
+$('goDue').onclick=()=>{$('subStatus').value='due';chooseTab('subscriptions');};$('month').value=C.today().slice(0,7);$('month').onchange=()=>{offset=0;refresh();};$('subStatus').onchange=()=>{offset=0;refresh();};$('searchBills').onclick=()=>{offset=0;refresh();};$('refresh').onclick=async()=>{notice('');$('connectionStatus').textContent='正在连接';try{await connect();$('connectionStatus').textContent='已连接电脑账本';await refresh();}catch(e){$('connectionStatus').textContent='连接失败';notice(e.message);}};
 $('prev').onclick=()=>{offset=Math.max(0,offset-20);refresh();};$('next').onclick=()=>{if(offset+20<total){offset+=20;refresh();}};
 function billHtml(x){return '<article class="entry"><img src="assets/'+esc(x.category)+'.png" alt=""><div class="entry-main"><div class="entry-title">'+esc(x.category_label)+'</div><div class="entry-meta">'+esc(x.occurred_on)+' · '+esc(x.note||'无备注')+'</div><div class="entry-actions"><button class="secondary" data-act="edit-bill" data-id="'+x.id+'">编辑账单</button></div></div><div class="entry-amount">'+(x.kind==='income'?'+':'−')+money(x.amount_cents)+'</div></article>';}
 function subHtml(x){const active=x.status==='active',due=active&&x.next_due<=C.today(),button=(action,label)=>'<button data-write class="secondary" data-act="'+action+'" data-id="'+x.id+'">'+label+'</button>';return '<article class="entry"><img src="assets/'+esc(x.category)+'.png" alt=""><div class="entry-main"><div class="entry-title">'+esc(x.name)+'</div><div class="entry-meta">'+({active:'启用',paused:'暂停',archived:'归档'}[x.status])+' · '+({weekly:'每周',monthly:'每月',yearly:'每年'}[x.cycle])+' · '+esc(x.next_due)+(due?' · 到期待确认':'')+'</div><div class="entry-meta">'+esc(x.note)+'</div><div class="entry-actions">'+(due?button('confirm','确认已扣款')+button('skip','跳过本期'):'')+button('edit-sub','编辑')+(active?button('pause','暂停'):button('resume','启用'))+(x.status==='archived'?'':button('archive','归档'))+'</div></div><div class="entry-amount">'+money(x.amount_cents)+'</div></article>';}
@@ -80,5 +112,6 @@ async function exportAll(){const version=await send('export_token');const data={
 async function download(format){$('json').disabled=$('csv').disabled=true;try{const data=await exportAll();let content,type,name;if(format==='json'){content=JSON.stringify(data,null,2);type='application/json';name='阿龍记账-'+C.today()+'.json';}else{const rows=[['日期','收支','金额分','币种','分类','备注','账单标识','订阅标识','周期键'],...data.bills.map(x=>[x.occurred_on,x.kind,x.amount_cents,'CNY',categories.find(c=>c.key===x.category)?.label||x.category,x.note,x.id,x.subscription_id,x.period_key])];content='﻿'+rows.map(r=>r.map(C.csvCell).join(',')).join('\r\n');type='text/csv;charset=utf-8';name='阿龍记账-'+C.today()+'.csv';}const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notice('已生成'+name+'；请在下载位置确认文件。CSV 仅包含账单，完整备份请使用 JSON。');}catch(e){notice('导出失败：'+e.message);}finally{$('json').disabled=$('csv').disabled=false;}}
 $('json').onclick=()=>download('json');$('csv').onclick=()=>download('csv');
 window.addEventListener('pagehide',()=>{clearTimeout(draftTimer);for(const p of listeners.values()){clearTimeout(p.timer);p.reject(Error('页面已关闭'));}listeners.clear();bc.close();});
-(async()=>{setWrites();try{const p=await connect();categories=p.categories;fillBillCategories();forms.subscription.elements.category.innerHTML=options('expense');forms.subscription.elements.category.value='digital';$('billCategory').insertAdjacentHTML('beforeend',categories.map(x=>'<option value="'+x.key+'">'+esc(x.label)+'</option>').join(''));const draft=await send('get_draft',{clientId});if(draft.bill){assign(forms.bill,draft.bill);fillBillCategories();assign(forms.bill,draft.bill);}if(draft.subscription)assign(forms.subscription,draft.subscription);editBill=draft.editBill||null;editSub=draft.editSub||null;if(editBill){$('billTitle').textContent='编辑账单';$('cancelBill').hidden=false;}if(editSub){$('subTitle').textContent='编辑订阅';$('cancelSub').hidden=false;}defaults();await refresh();if(unresolved)await recover();}catch(e){notice(e.message);}})();
+(async()=>{setWrites();fillBillCategories();forms.subscription.elements.category.innerHTML=options('expense');forms.subscription.elements.category.value='digital';$('billCategory').insertAdjacentHTML('beforeend',categories.map(x=>'<option value="'+x.key+'">'+esc(x.label)+'</option>').join(''));defaults();try{const p=await connect();categories=p.categories;$('connectionStatus').textContent='已连接电脑账本';fillBillCategories();const draft=await send('get_draft',{clientId});if(draft.bill){assign(forms.bill,draft.bill);fillBillCategories();assign(forms.bill,draft.bill);}if(draft.subscription)assign(forms.subscription,draft.subscription);editBill=draft.editBill||null;editSub=draft.editSub||null;if(editBill){$('billTitle').textContent='编辑账单';$('cancelBill').hidden=false;}if(editSub){$('subTitle').textContent='编辑订阅';$('cancelSub').hidden=false;}defaults();await refresh();if(unresolved)await recover();}catch(e){$('connectionStatus').textContent='连接失败';notice(e.message);$('list').innerHTML='<div class="empty"><strong>暂时没有连上账本</strong><p>请确认电脑上的 Cindy 与阿龍记账已启用，然后点击“重新连接”。</p></div>';}})();
+}catch(error){const notice=document.getElementById('notice');if(notice)notice.textContent='页面初始化失败：'+error.message;const list=document.getElementById('list');if(list)list.textContent='请重新打开工作台；若仍失败，请更新插件。';console.error(error);}
 })();
