@@ -20,7 +20,7 @@ def run():
     for p in list((ROOT/'src').glob('*.js'))+[ROOT/'plugin/main.js',ROOT/'plugin/view.js']:
         command([str(node),'--check',str(p)])
     manifest=json.loads((ROOT/'plugin/ghost.json').read_text(encoding='utf-8'))
-    assert manifest['schemaVersion']==3 and manifest['id']=='liang-ledger' and manifest['version']=='0.3.0'
+    assert manifest['schemaVersion']==3 and manifest['id']=='liang-ledger' and manifest['version']=='0.4.0'
     assert manifest['command']=='记账' and manifest['library'] is True and manifest['notify'] is True
     assert manifest['mobile']['channels']==['liang-ledger']
     assert not set(manifest).intersection({'fs','network','node','subscribe','agent','android','deviceSync'})

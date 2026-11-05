@@ -21,6 +21,7 @@ def build():
     view_sources=[(ROOT/'src/core.js').read_text(encoding='utf-8'),
                   'globalThis.LedgerViewCategories='+json.dumps(categories,ensure_ascii=False)+';\n',
                   (ROOT/'src/transport.js').read_text(encoding='utf-8'),
+                  (ROOT/'src/charts.js').read_text(encoding='utf-8'),
                   (ROOT/'src/app.js').read_text(encoding='utf-8')]
     (PLUGIN/'view.js').write_text('\n'.join(view_sources),encoding='utf-8',newline='\n')
     (PLUGIN/'main-view.html').write_text(template,encoding='utf-8',newline='\n')

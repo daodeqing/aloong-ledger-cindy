@@ -1,18 +1,18 @@
 {
   "schemaVersion": 3,
   "id": "liang-ledger",
-  "name": "阿龍记账",
-  "version": "0.3.0",
+  "name": "阿龍ai记账助手",
+  "version": "0.4.0",
   "description": "本地个人账本、图片记账、周期订阅与生活提醒。电脑和绑定手机共用工作台。",
   "whenToUse": "需要手动或自然语言记账、从支付截图或小票图片记账、查询账单与分类汇总、管理订阅、设置喝药等生活提醒时使用",
   "minCindyVersion": "0.1.125",
-  "releaseNotes": "新增生活提醒：聊天与工作台创建、改期、完成、取消；轻量常驻检查、重启补报和投递状态，提醒不调用模型。新增图片账单工具：由当前 Cindy 对话识图，插件校验人民币金额、原图去重并原子保存。工作台沿用 ALOONG 蓝白风格，新增提醒入口并适配电脑与320px手机。保留自然周期、整数分、幂等请求和已有账本数据。Cindy退出、电脑休眠时无法即时提醒，不保证响铃或锁屏推送。",
+  "releaseNotes": "更名为阿龍ai记账助手。账单和订阅新增可恢复的删除与回收站；删除订阅停止后续提醒并保留历史扣款。电脑工作台扩展月度信息、每日收支折线图、分类支出扇形图、订阅与提醒概况，适配手机和明暗主题。明确 Cindy 对话页自然语言及原图直接记账入口，字段不清楚时再询问。保持整数分、请求幂等、原图去重和旧账本数据。进一步压缩桌面首屏，月度概况与图表横排，保留清晰的账单与录入操作。",
   "entry": "main.js",
   "launch": "resident",
   "command": "记账",
   "icon": "assets/icon.png",
   "mainView": {
-    "title": "阿龍记账",
+    "title": "阿龍ai记账助手",
     "icon": "chart-column",
     "html": "main-view.html"
   },
@@ -51,7 +51,7 @@
     },
     {
       "name": "record_bill",
-      "description": "记录一笔账单，返回整数分账单。收支由 kind 指定。",
+      "description": "在当前 Cindy 对话页直接记录用户描述的一笔人民币收支，无需打开工作台或先生成AI草稿。金额、收支明确即可按用户意图保存；不清楚才询问。返回已保存账单及整数分金额。分类key与get_summary返回一致。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -96,7 +96,7 @@
     },
     {
       "name": "edit_bill",
-      "description": "修改已有账单；请先查询 revision，再提交完整账单字段。",
+      "description": "编辑、删除或恢复账单。编辑时提交完整字段；删除不计入汇总。先查询最新revision，删除可恢复。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -136,15 +136,21 @@
           "occurredOn": {
             "type": "string",
             "description": "YYYY-MM-DD，默认电脑本地今天"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "edit",
+              "delete",
+              "restore"
+            ],
+            "description": "默认编辑；delete移入回收站；restore恢复。均需最新revision"
           }
         },
         "required": [
           "requestId",
           "id",
-          "revision",
-          "kind",
-          "amount",
-          "category"
+          "revision"
         ],
         "additionalProperties": false
       }
@@ -173,6 +179,10 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 20
+          },
+          "deletedOnly": {
+            "type": "boolean",
+            "description": "true仅查询回收站，默认false仅查询未删除记录"
           }
         },
         "required": [],
@@ -181,7 +191,7 @@
     },
     {
       "name": "get_summary",
-      "description": "获取月份收支分类汇总；contextOnly=true 时只读取执行电脑当前日期、时区和提醒运行条件。创建自然语言提醒前用此确认日期。",
+      "description": "查询月度收支、逐日趋势、分类、笔数、日均支出、最大支出、上月支出及订阅月成本估算。contextOnly=true返回电脑当前日期、时区供相对时间解析。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -216,6 +226,10 @@
           "offset": {
             "type": "integer",
             "minimum": 0
+          },
+          "deletedOnly": {
+            "type": "boolean",
+            "description": "true仅查询回收站，默认false仅查询未删除记录"
           }
         },
         "required": [],
@@ -277,7 +291,7 @@
     },
     {
       "name": "update_subscription",
-      "description": "修改订阅或启用/暂停/归档；先查询 revision。",
+      "description": "编辑、删除或恢复订阅。删除停止后续提醒，保留历史扣款；恢复原状态。先查询最新revision，删除可恢复。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -330,6 +344,15 @@
               "paused",
               "archived"
             ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "update",
+              "delete",
+              "restore"
+            ],
+            "description": "默认编辑；delete移入回收站；restore恢复。均需最新revision"
           }
         },
         "required": [
